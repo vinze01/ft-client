@@ -4,13 +4,13 @@ import router from '../router';
 
 interface AuthState {
     token: string;
-    user: string | null;
+    user: object | null;
 }
 
 export const useAuthStore = defineStore('auth', {
     state: (): AuthState => ({
         token: localStorage.getItem('token') || '',
-        user: localStorage.getItem('user') || null,
+        user: localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null,
     }),
     getters: {
         isAuthenticated: (state): boolean => !!state.token,
@@ -20,23 +20,23 @@ export const useAuthStore = defineStore('auth', {
             try {
                 const response = await axios.post('http://localhost:3001/api/login', { username, password });
                 this.token = response.data.token;
-                console.log('response :>> ', response);
                 this.user = response.data.user;
-                console.log('response.data.user :>> ', response.data.user);
                 localStorage.setItem('token', this.token);
-                localStorage.setItem('user', JSON.stringify(this.user))
+                localStorage.setItem('user', JSON.stringify(this.user));
                 axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`;
-                router.push('/dashboard');
+                await router.push('/dashboard');
+                return response;
             } catch (error) {
                 console.error('Login failed:', error);
+                throw error;
             }
         },
+
         async register(payload: any) {
             try {
-                console.log('payloadq :>> ', payload);
                 const response = await axios.post('http://localhost:3001/api/register', payload);
                 if (response.status === 201) {
-                    await this.login(payload.username, payload.password);
+                    await router.push('/login')
                 }
             } catch (error) {
                 console.error('Registration failed', error);

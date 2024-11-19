@@ -38,15 +38,37 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 import { useAuthStore } from '../stores/authStore';
+import { notification } from 'ant-design-vue';
+import { getFullName } from '../utils';
 
 export default defineComponent({
   setup() {
     const authStore = useAuthStore();
-    const username = ref('');
-    const password = ref('');
+    const username = ref<string>('');
+    const password = ref<string>('');
 
-    const login = () => {
-      authStore.login(username.value, password.value);
+    const login = async () => {
+      if (!username.value || !password.value) {
+        notification.error({
+          message: 'Invalid Action',
+          description: 'Please enter both username and password.',
+        });
+        return;
+      }
+
+      try {
+        await authStore.login(username.value, password.value);
+
+        notification.success({
+          message: 'Login Successful',
+          description: `Welcome back, ${getFullName(authStore.user)}!`,
+        });
+      } catch (error) {
+        notification.error({
+          message: 'Login Failed',
+          description: error.response?.data?.error || 'An unexpected error occurred.',
+        });
+      }
     };
 
     return { username, password, login };

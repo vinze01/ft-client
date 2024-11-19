@@ -2,7 +2,7 @@
   <div class="register-page">
     <a-card class="register-form" title="Register">
       <a-form :model="formState" @submit.prevent="onSubmit" layout="vertical">
-        <a-row type="flex" :gutter="[10,10]">
+        <a-row type="flex" :gutter="[10, 10]">
           <a-col :span="8">
             <a-form-item
               label="First Name"
@@ -53,10 +53,7 @@
               label="Email"
               :rules="[{ required: true, message: 'Please enter your email' }]"
             >
-              <a-input
-                v-model:value="formState.email"
-                placeholder="Enter your email"
-              />
+              <a-input v-model:value="formState.email" placeholder="Enter your email" />
             </a-form-item>
           </a-col>
         </a-row>
@@ -79,6 +76,18 @@
             placeholder="Enter your password"
           />
         </a-form-item>
+
+        <a-col :span="24">
+          <a-form-item label="Upload Avatar">
+            <a-upload-dragger
+              v-model:file-list="fileList"
+              :before-upload="handleUpload"
+              :max-count="1"
+            >
+              <p class="ant-upload-text">Drag and drop an image or click to upload</p>
+            </a-upload-dragger>
+          </a-form-item>
+        </a-col>
 
         <!-- Submit Button -->
         <a-form-item>
@@ -110,13 +119,24 @@ export default defineComponent({
 
     const authStore = useAuthStore();
     const router = useRouter();
+    const fileList = ref([]);
+    const handleUpload = (file: any) => {
+      fileList.value = [file];
+      return false;
+    };
 
     const onSubmit = async () => {
       try {
-        const payload = formState.value;
-        console.log("payloadf :>> ", payload);
-        await authStore.register(payload);
-        router.push("/dashboard");
+        const formData = new FormData();
+        Object.keys(formState.value).forEach((key) => {
+          formData.append(key, formState.value[key]);
+        });
+        if (fileList.value.length) {
+          formData.append("avatar", fileList.value[0]);
+        }
+
+        await authStore.register(formData);
+        await router.push("/login");
       } catch (error) {
         console.error("Registration failed", error);
       }
@@ -125,6 +145,8 @@ export default defineComponent({
     return {
       formState,
       onSubmit,
+      fileList,
+      handleUpload,
     };
   },
 });
