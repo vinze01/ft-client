@@ -43,7 +43,7 @@ export interface ExpenseInput {
   date: string;
 }
 
-export type IncomeType = 'monthly' | 'yearly' | 'bi-monthly';
+export type IncomeType = "monthly" | "yearly" | "bi-monthly";
 export type HalfMonth = 1 | 2;
 
 export interface Income {
@@ -60,13 +60,15 @@ export interface Income {
 
 export interface IncomeInput {
   amount: number;
+  months?: string[];
   month?: string;
   type: IncomeType;
   year: number;
+  halfMonths?: HalfMonth[];
   halfMonth?: HalfMonth;
 }
 
-export type BudgetType = 'monthly' | 'yearly' | 'bi-monthly';
+export type BudgetType = "monthly" | "yearly" | "bi-monthly";
 
 export interface Budget {
   id: number;
@@ -84,13 +86,15 @@ export interface Budget {
 export interface BudgetInput {
   category: string;
   amount: number;
+  months?: string[];
   month?: string;
   type: BudgetType;
   year: number;
+  halfMonths?: HalfMonth[];
   halfMonth?: HalfMonth;
 }
 
-export type BudgetView = 'monthly' | 'yearly' | 'bi-monthly';
+export type BudgetView = "monthly" | "yearly" | "bi-monthly";
 
 export interface DashboardSummary {
   totalIncome: number;

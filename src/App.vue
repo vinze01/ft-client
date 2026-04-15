@@ -1,32 +1,32 @@
 <template>
-  <div class="min-h-screen bg-pattern">
-    <Navbar v-if="isAuthenticated" />
-    <main v-if="isAuthenticated" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
+  <div class="min-h-screen bg-pattern pb-20 md:pb-6">
+    <Navbar v-if="authStore.isAuthenticated" />
+    <main
+      v-if="authStore.isAuthenticated"
+      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6"
+    >
+      <router-view />
     </main>
-    <router-view v-else />
+    <router-view v-if="!authStore.isAuthenticated" />
+    <BottomNav v-if="authStore.isAuthenticated" />
     <Toast ref="toastRef" />
     <ConfirmModal ref="confirmRef" />
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, ref, onMounted } from 'vue';
-import { useAuthStore } from './stores/authStore';
-import Navbar from './components/Navbar.vue';
-import Toast from './components/Toast.vue';
-import ConfirmModal from './components/ConfirmModal.vue';
+import { defineComponent, ref, onMounted } from "vue";
+import { useAuthStore } from "./stores/authStore";
+import Navbar from "./components/Navbar.vue";
+import BottomNav from "./components/BottomNav.vue";
+import Toast from "./components/Toast.vue";
+import ConfirmModal from "./components/ConfirmModal.vue";
 
 export default defineComponent({
-  name: 'App',
-  components: { Navbar, Toast, ConfirmModal },
+  name: "App",
+  components: { Navbar, BottomNav, Toast, ConfirmModal },
   setup() {
     const authStore = useAuthStore();
-    const isAuthenticated = computed(() => authStore.isAuthenticated);
     const toastRef = ref<InstanceType<typeof Toast> | null>(null);
     const confirmRef = ref<InstanceType<typeof ConfirmModal> | null>(null);
 
@@ -35,19 +35,7 @@ export default defineComponent({
       (window as any).__confirmRef = confirmRef.value;
     });
 
-    return { isAuthenticated, toastRef, confirmRef };
-  }
+    return { authStore, toastRef, confirmRef };
+  },
 });
 </script>
-
-<style>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

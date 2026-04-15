@@ -7,7 +7,7 @@
       :collapsed-width="80"
       theme="dark"
       width="250"
-      style="height: 100vh; position: fixed; left: 0; top: 0;"
+      style="height: 100vh; position: fixed; left: 0; top: 0"
     >
       <!-- User Information Card -->
       <a-card class="side-card" :bordered="false">
@@ -22,11 +22,7 @@
       </a-card>
 
       <!-- Navigation Menu with Icons -->
-      <a-menu
-        mode="inline"
-        theme="dark"
-        :default-selected-keys="['dashboard']"
-      >
+      <a-menu mode="inline" theme="dark" :default-selected-keys="['dashboard']">
         <a-menu-item key="dashboard">
           <router-link to="/dashboard">
             <a-icon type="dashboard" />
@@ -56,8 +52,8 @@
     </a-layout-sider>
 
     <!-- Main Content -->
-    <a-layout style="margin-left: 250px;">
-      <a-layout-content style="padding: 24px;">
+    <a-layout style="margin-left: 250px">
+      <a-layout-content style="padding: 24px">
         <router-view />
       </a-layout-content>
     </a-layout>
@@ -65,21 +61,21 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue';
-import { useAuthStore } from '../stores/authStore';
+import { defineComponent, ref, computed } from "vue";
+import { useAuthStore } from "../stores/authStore";
 import { getFullName } from "../utils";
 
 export default defineComponent({
   setup() {
-    const authStore = useAuthStore();
+    const authStore: any = useAuthStore();
     const logout = () => authStore.logout();
 
     const fullName = computed(() => {
       return authStore.user ? getFullName(JSON.parse(authStore.user)) : "Guest";
     });
     const email = computed(() => {
-      let currUser = JSON.parse(authStore.user)
-      return currUser.email
+      let currUser = JSON.parse(authStore.user);
+      return currUser.email;
     });
 
     return {
@@ -150,7 +146,6 @@ a:hover {
   color: #1890ff;
 }
 
-/* Username text for improved readability */
 .username {
   margin-top: 10px;
   color: white;
