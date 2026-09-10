@@ -8,6 +8,15 @@ import Expenses from '../views/Expenses.vue';
 import Incomes from '../views/Incomes.vue';
 import Settings from '../views/Settings.vue';
 import ResetPassword from '../views/ResetPassword.vue';
+import Accounts from '../views/Accounts.vue';
+import Bills from '../views/Bills.vue';
+import Goals from '../views/Goals.vue';
+import Recurring from '../views/Recurring.vue';
+import Insights from '../views/Insights.vue';
+import Tags from '../views/Tags.vue';
+import Savings from '../views/Savings.vue';
+import Automations from '../views/Automations.vue';
+import Notifications from '../views/Notifications.vue';
 
 const routes: any = [
   { path: '/', redirect: '/login' },
@@ -19,6 +28,15 @@ const routes: any = [
   { path: '/expenses', component: Expenses, meta: { requiresAuth: true } },
   { path: '/incomes', component: Incomes, meta: { requiresAuth: true } },
   { path: '/settings', component: Settings, meta: { requiresAuth: true } },
+  { path: '/accounts', component: Accounts, meta: { requiresAuth: true } },
+  { path: '/bills', component: Bills, meta: { requiresAuth: true } },
+  { path: '/goals', component: Goals, meta: { requiresAuth: true } },
+  { path: '/recurring', component: Recurring, meta: { requiresAuth: true } },
+  { path: '/insights', component: Insights, meta: { requiresAuth: true } },
+  { path: '/tags', component: Tags, meta: { requiresAuth: true } },
+  { path: '/savings', component: Savings, meta: { requiresAuth: true } },
+  { path: '/automations', component: Automations, meta: { requiresAuth: true } },
+  { path: '/notifications', component: Notifications, meta: { requiresAuth: true } },
 ];
 
 const router = createRouter({

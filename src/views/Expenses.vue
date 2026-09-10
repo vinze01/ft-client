@@ -282,7 +282,7 @@
         <div class="modal-content animate-scale-in">
           <!-- Modal Header with Icon -->
           <div class="modal-header">
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-4 w-full">
               <div
                 class="modal-icon bg-gradient-to-br from-rose-400 to-rose-600 text-white"
               >
@@ -315,7 +315,7 @@
                   ></path>
                 </svg>
               </div>
-              <div>
+              <div class="flex-1">
                 <h3 class="text-lg font-bold text-gray-800 dark:text-white">
                   {{ editingId ? "Edit Expense" : "Add New Expense" }}
                 </h3>
@@ -329,7 +329,7 @@
               </div>
               <button
                 @click="closeModal"
-                class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500"
+                class="ml-auto flex-shrink-0 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500"
               >
                 <svg
                   class="w-5 h-5"

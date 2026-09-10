@@ -311,6 +311,209 @@
         </div>
       </div>
 
+      <!-- Data Export & Import Section -->
+      <div class="card p-6">
+        <h2
+          class="text-lg font-semibold text-gray-800 dark:text-white mb-6 flex items-center gap-2"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            ></path>
+          </svg>
+          Data Export & Import
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <label class="label">Type</label>
+            <select v-model="exportForm.type" class="input">
+              <option value="expense">Expenses</option>
+              <option value="income">Income</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Format</label>
+            <select v-model="exportForm.format" class="input">
+              <option value="csv">CSV</option>
+              <option value="json">JSON</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <button @click="exportTransactions" class="btn btn-secondary w-full">
+              Download
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+          <button @click="exportFullData" class="btn btn-secondary flex-1">
+            Download Full Backup (JSON)
+          </button>
+          <button @click="downloadTemplate" class="btn btn-secondary flex-1">
+            Import Template (CSV)
+          </button>
+        </div>
+
+        <div>
+          <label class="label">Import Transactions (CSV)</label>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input
+              ref="importInput"
+              type="file"
+              accept=".csv"
+              class="input"
+              @change="importTransactions"
+            />
+          </div>
+          <div
+            v-if="importResult"
+            class="mt-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 text-sm"
+          >
+            <p class="text-gray-800 dark:text-white">
+              Imported {{ importResult.imported }} record(s)
+            </p>
+            <ul
+              v-if="importResult.errors.length > 0"
+              class="text-red-500 mt-1 list-disc list-inside"
+            >
+              <li v-for="(err, i) in importResult.errors" :key="i">{{ err }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Section -->
+      <div class="card p-6">
+        <h2
+          class="text-lg font-semibold text-gray-800 dark:text-white mb-6 flex items-center gap-2"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            ></path>
+          </svg>
+          Security
+        </h2>
+
+        <div class="mb-6">
+          <h3 class="font-medium text-gray-800 dark:text-white mb-2">
+            Two-Factor Authentication
+          </h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Protect your account with an authenticator app.
+          </p>
+          <div v-if="!twofa.showSetup" class="flex flex-col sm:flex-row gap-3">
+            <button @click="enable2FA" class="btn btn-secondary">
+              Set Up 2FA
+            </button>
+            <button @click="disable2FA" class="btn btn-ghost">
+              Disable 2FA
+            </button>
+          </div>
+          <div v-else class="space-y-3">
+            <img
+              v-if="twofa.qrCode"
+              :src="twofa.qrCode"
+              alt="2FA QR code"
+              class="w-48 h-48 rounded-xl border border-gray-200 dark:border-gray-700"
+            />
+            <p
+              v-if="twofa.secret"
+              class="text-xs font-mono text-gray-500 dark:text-gray-400 break-all"
+            >
+              {{ twofa.secret }}
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input
+                v-model="twofa.code"
+                type="text"
+                inputmode="numeric"
+                class="input sm:max-w-xs"
+                placeholder="Enter 6-digit code"
+              />
+              <button @click="verify2FA" class="btn btn-primary">Verify</button>
+              <button @click="twofa.showSetup = false" class="btn btn-ghost">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-medium text-gray-800 dark:text-white">
+              Sessions & Devices
+            </h3>
+            <button
+              v-if="otherSessions.length > 0"
+              @click="revokeOtherSessions"
+              class="btn btn-ghost text-red-500 text-sm"
+            >
+              Revoke Others
+            </button>
+          </div>
+          <div
+            v-if="!currentSession && otherSessions.length === 0"
+            class="text-sm text-gray-500 dark:text-gray-400"
+          >
+            No active sessions recorded.
+          </div>
+          <div v-else class="space-y-2">
+            <div
+              v-if="currentSession"
+              class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50"
+            >
+              <div>
+                <p class="text-sm font-medium text-gray-800 dark:text-white">
+                  {{ currentSession.deviceInfo || 'Current session' }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ currentSession.ipAddress || '' }}
+                </p>
+              </div>
+              <span class="badge badge-success">Current</span>
+            </div>
+            <div
+              v-for="session in otherSessions"
+              :key="session.id"
+              class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50"
+            >
+              <div>
+                <p class="text-sm font-medium text-gray-800 dark:text-white">
+                  {{ session.deviceInfo || 'Unknown device' }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ session.ipAddress || '' }}
+                </p>
+              </div>
+              <button
+                @click="revokeSession(session.id)"
+                class="btn btn-ghost text-red-500 text-sm"
+              >
+                Revoke
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Delete Account Section -->
       <div class="card p-6 border-red-200">
         <h2
@@ -365,6 +568,22 @@ export default defineComponent({
     const savingProfile = ref(false);
     const savingPassword = ref(false);
     const customColor = ref(themeStore.accentColor);
+    const importInput = ref<HTMLInputElement | null>(null);
+    const importResult = ref<{ imported: number; errors: string[] } | null>(null);
+    const currentSession = ref<any | null>(null);
+    const otherSessions = ref<any[]>([]);
+
+    const exportForm = reactive({
+      type: 'expense',
+      format: 'csv'
+    });
+
+    const twofa = reactive({
+      showSetup: false,
+      qrCode: '',
+      secret: '',
+      code: ''
+    });
 
     const form = reactive({
       firstName: "",
@@ -397,6 +616,7 @@ export default defineComponent({
           : "";
         form.avatar = authStore.user.avatar || null;
       }
+      fetchDevices();
     });
 
     const triggerAvatarUpload = () => {
@@ -544,6 +764,208 @@ export default defineComponent({
       toast.success("Theme color reset to default");
     };
 
+    const authHeaders = () => ({
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    });
+
+    const downloadBlob = (content: BlobPart, filename: string, mime: string) => {
+      const blob = content instanceof Blob ? content : new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    };
+
+    const todayStamp = () => new Date().toISOString().split("T")[0];
+
+    const exportTransactions = async () => {
+      try {
+        if (exportForm.format === "csv") {
+          const response = await axios.get(`${API_URL}/export/transactions`, {
+            params: { type: exportForm.type, format: "csv" },
+            headers: authHeaders(),
+            responseType: "blob",
+          });
+          downloadBlob(response.data, `transactions_${exportForm.type}_${todayStamp()}.csv`, "text/csv");
+        } else {
+          const response = await axios.get(`${API_URL}/export/transactions`, {
+            params: { type: exportForm.type },
+            headers: authHeaders(),
+          });
+          downloadBlob(
+            JSON.stringify(response.data.data || response.data, null, 2),
+            `transactions_${exportForm.type}_${todayStamp()}.json`,
+            "application/json",
+          );
+        }
+        toast.success("Export downloaded");
+      } catch (error) {
+        toast.error("Failed to export transactions");
+      }
+    };
+
+    const exportFullData = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/export/full-data`, {
+          params: { format: "json" },
+          headers: authHeaders(),
+        });
+        const payload = response.data.data || response.data;
+        downloadBlob(
+          JSON.stringify(payload, null, 2),
+          `finance_tracker_export_${todayStamp()}.json`,
+          "application/json",
+        );
+        toast.success("Backup downloaded");
+      } catch (error) {
+        toast.error("Failed to export backup");
+      }
+    };
+
+    const downloadTemplate = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/import/template`, {
+          headers: authHeaders(),
+          responseType: "blob",
+        });
+        downloadBlob(response.data, "import_template.csv", "text/csv");
+      } catch (error) {
+        toast.error("Failed to download template");
+      }
+    };
+
+    const importTransactions = async (event: Event) => {
+      const target = event.target as HTMLInputElement;
+      const file = target.files?.[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.post(`${API_URL}/import/transactions`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        importResult.value = response.data.data;
+        toast.success(`Imported ${response.data.data.imported} record(s)`);
+      } catch (error: any) {
+        toast.error(error.response?.data?.error || "Failed to import file");
+      } finally {
+        if (importInput.value) importInput.value.value = "";
+      }
+    };
+
+    const enable2FA = async () => {
+      try {
+        const response = await axios.post(
+          `${API_URL}/security/2fa/enable`,
+          {},
+          { headers: authHeaders() },
+        );
+        twofa.qrCode = response.data.data.qrCode;
+        twofa.secret = response.data.data.secret;
+        twofa.code = "";
+        twofa.showSetup = true;
+      } catch (error) {
+        toast.error("Failed to start 2FA setup");
+      }
+    };
+
+    const verify2FA = async () => {
+      if (!twofa.code) {
+        toast.error("Enter the code from your authenticator app");
+        return;
+      }
+      try {
+        await axios.post(
+          `${API_URL}/security/2fa/verify`,
+          { code: twofa.code },
+          { headers: authHeaders() },
+        );
+        twofa.showSetup = false;
+        twofa.qrCode = "";
+        twofa.secret = "";
+        twofa.code = "";
+        toast.success("Two-factor authentication enabled");
+      } catch (error: any) {
+        toast.error(error.response?.data?.error || "Invalid code");
+      }
+    };
+
+    const disable2FA = async () => {
+      const ok = await confirm({
+        title: "Disable 2FA",
+        content: "Are you sure you want to disable two-factor authentication?",
+        confirmText: "Disable",
+      });
+      if (!ok) return;
+      try {
+        await axios.post(
+          `${API_URL}/security/2fa/disable`,
+          {},
+          { headers: authHeaders() },
+        );
+        toast.success("Two-factor authentication disabled");
+      } catch (error) {
+        toast.error("Failed to disable 2FA");
+      }
+    };
+
+    const fetchDevices = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/security/devices`, {
+          headers: authHeaders(),
+        });
+        currentSession.value = response.data.data.current || null;
+        otherSessions.value = response.data.data.others || [];
+      } catch (error) {
+        currentSession.value = null;
+        otherSessions.value = [];
+      }
+    };
+
+    const revokeSession = async (id: number) => {      const ok = await confirm({
+        title: "Revoke Session",
+        content: "Are you sure you want to revoke this session?",
+        confirmText: "Revoke",
+      });
+      if (!ok) return;
+      try {
+        await axios.delete(`${API_URL}/security/sessions/${id}`, {
+          headers: authHeaders(),
+        });
+        otherSessions.value = otherSessions.value.filter((s) => s.id !== id);
+        toast.success("Session revoked");
+      } catch (error) {
+        toast.error("Failed to revoke session");
+      }
+    };
+
+    const revokeOtherSessions = async () => {
+      const ok = await confirm({
+        title: "Revoke Other Sessions",
+        content:
+          "Are you sure you want to sign out all other sessions? This will not affect your current session.",
+        confirmText: "Revoke",
+      });
+      if (!ok) return;
+      try {
+        await axios.delete(`${API_URL}/security/sessions/other`, {
+          headers: authHeaders(),
+        });
+        otherSessions.value = [];
+        toast.success("Other sessions revoked");
+      } catch (error) {
+        toast.error("Failed to revoke other sessions");
+      }
+    };
+
     return {
       avatarInput,
       savingProfile,
@@ -560,6 +982,21 @@ export default defineComponent({
       customColor,
       selectColor,
       resetColor,
+      exportForm,
+      importInput,
+      importResult,
+      exportTransactions,
+      exportFullData,
+      downloadTemplate,
+      importTransactions,
+      twofa,
+      enable2FA,
+      verify2FA,
+      disable2FA,
+      currentSession,
+      otherSessions,
+      revokeSession,
+      revokeOtherSessions,
     };
   },
 });

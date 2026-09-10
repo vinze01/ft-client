@@ -2,12 +2,14 @@
   <div class="min-h-screen bg-pattern pb-20 md:pb-6">
     <Navbar v-if="authStore.isAuthenticated" />
     <main
-      v-if="authStore.isAuthenticated"
-      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6"
+      :class="
+        authStore.isAuthenticated
+          ? 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6'
+          : ''
+      "
     >
       <router-view />
     </main>
-    <router-view v-if="!authStore.isAuthenticated" />
     <BottomNav v-if="authStore.isAuthenticated" />
     <Toast ref="toastRef" />
     <ConfirmModal ref="confirmRef" />
