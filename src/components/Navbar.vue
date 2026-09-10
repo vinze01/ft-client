@@ -18,26 +18,79 @@
           </router-link>
         </div>
 
-        <!-- Desktop Menu -->
-        <div class="hidden md:flex items-center space-x-1">
+        <!-- Desktop / Tablet Menu -->
+        <div class="hidden md:flex items-center gap-1">
+          <div
+            v-for="group in groupedNav"
+            :key="group.name"
+            class="relative group"
+          >
+            <button
+              class="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition duration-200"
+              :class="[
+                isGroupActive(group)
+                  ? 'bg-[var(--accent-color)] text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 group-hover:text-[var(--accent-color)] group-hover:bg-[var(--accent-50)] dark:group-hover:bg-[var(--accent-50)] dark:group-hover:text-white',
+              ]"
+            >
+              {{ group.name }}
+              <svg class="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div
+              class="absolute left-0 top-full pt-2 opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-150 z-50"
+            >
+              <div
+                class="w-52 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 py-1"
+              >
+                <router-link
+                  v-for="item in group.items"
+                  :key="item.path"
+                  :to="item.path"
+                  class="px-4 py-2 text-sm flex items-center gap-3 transition duration-150"
+                  :class="[
+                    $route.path === item.path
+                      ? 'bg-[var(--accent-color)] text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ]"
+                >
+                  <component :is="item.icon" class="w-4 h-4" />
+                  {{ item.label }}
+                </router-link>
+              </div>
+            </div>
+          </div>
           <router-link
-            v-for="item in navItems"
-            :key="item.path"
-            :to="item.path"
-            class="px-3 py-2 rounded-lg text-sm font-medium transition duration-200 flex items-center gap-2"
+            to="/settings"
+            class="flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition duration-200 whitespace-nowrap"
             :class="[
-              $route.path === item.path
-                ? 'text-[var(--accent-color)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]'
-                : 'text-gray-600 dark:text-white hover:text-[var(--accent-color)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]',
+              $route.path === '/settings'
+                ? 'bg-[var(--accent-color)] text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-[var(--accent-color)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-50)] dark:hover:text-white',
             ]"
           >
-            <component :is="item.icon" class="w-4 h-4" />
-            {{ item.label }}
+            <component :is="SettingsIcon" class="w-4 h-4" />
+            Settings
           </router-link>
         </div>
 
         <!-- Right Side -->
         <div class="flex items-center gap-3">
+          <!-- Notifications -->
+          <router-link
+            to="/notifications"
+            class="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition duration-200"
+            title="Notifications"
+          >
+            <component :is="BellIcon" class="w-5 h-5" />
+            <span
+              v-if="notificationStore.unreadCount > 0"
+              class="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-red-500 text-white text-[0.65rem] font-bold flex items-center justify-center"
+            >
+              {{ notificationStore.unreadCount > 9 ? '9+' : notificationStore.unreadCount }}
+            </span>
+          </router-link>
           <!-- Theme Toggle -->
           <button
             @click="themeStore.toggle()"
@@ -139,7 +192,7 @@
                   <p class="text-sm font-medium text-gray-800 dark:text-white">
                     {{ fullName }}
                   </p>
-                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                  <p class="text-xs text-gray-500 dark:text-gray-400 truncate" :title="userEmail">
                     {{ userEmail }}
                   </p>
                 </div>
@@ -148,7 +201,7 @@
                   class="px-4 py-2 text-sm flex items-center gap-2 transition duration-150"
                   :class="
                     themeStore.isDark
-                      ? 'text-[var(--accent-color)] hover:bg-[var(--accent-900)]'
+                      ? 'text-[var(--accent-color)] dark:text-white hover:bg-[var(--accent-50)]'
                       : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                   "
                 >
@@ -178,7 +231,7 @@
                   class="w-full px-4 py-2 text-left text-sm flex items-center gap-2 transition duration-150"
                   :class="
                     themeStore.isDark
-                      ? 'text-[var(--accent-color)] hover:bg-[var(--accent-900)]'
+                      ? 'text-[var(--accent-color)] dark:text-white hover:bg-[var(--accent-50)]'
                       : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                   "
                 >
@@ -253,20 +306,57 @@
         class="md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800"
       >
         <div class="px-4 py-3 space-y-2">
+          <div v-for="group in groupedNav" :key="group.name">
+            <button
+              @click="toggleMobileGroup(group.name)"
+              class="w-full px-4 py-3 rounded-lg text-sm font-medium transition duration-200 flex items-center justify-between"
+              :class="[
+                isGroupActive(group)
+                  ? 'bg-[var(--accent-color)] text-white shadow-sm'
+                  : 'text-gray-600 dark:text-white hover:text-[var(--accent-color)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-50)] dark:hover:text-white',
+              ]"
+            >
+              {{ group.name }}
+              <svg
+                class="w-4 h-4 transition-transform duration-200"
+                :class="{ 'rotate-180': openMobileGroup === group.name }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div v-if="openMobileGroup === group.name" class="pl-3 space-y-1 mt-1">
+              <router-link
+                v-for="item in group.items"
+                :key="item.path"
+                :to="item.path"
+                @click="showMobileMenu = false"
+                class="block px-4 py-2.5 rounded-lg text-sm font-medium transition duration-200 flex items-center gap-3"
+                :class="[
+                  $route.path === item.path
+                    ? 'bg-[var(--accent-color)] text-white shadow-sm'
+                    : 'text-gray-600 dark:text-white hover:text-[var(--accent-color)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-50)] dark:hover:text-white',
+                ]"
+              >
+                <component :is="item.icon" class="w-5 h-5" />
+                {{ item.label }}
+              </router-link>
+            </div>
+          </div>
           <router-link
-            v-for="item in navItems"
-            :key="item.path"
-            :to="item.path"
+            to="/settings"
             @click="showMobileMenu = false"
             class="block px-4 py-3 rounded-lg text-sm font-medium transition duration-200 flex items-center gap-3"
             :class="[
-              $route.path === item.path
-                ? 'text-[var(--accent-color)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]'
-                : 'text-gray-600 dark:text-white hover:text-[var(--accent-color)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]',
+              $route.path === '/settings'
+                ? 'bg-[var(--accent-color)] text-white shadow-sm'
+                : 'text-gray-600 dark:text-white hover:text-[var(--accent-color)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-50)] dark:hover:text-white',
             ]"
           >
-            <component :is="item.icon" class="w-5 h-5" />
-            {{ item.label }}
+            <component :is="SettingsIcon" class="w-5 h-5" />
+            Settings
           </router-link>
           <button
             @click="handleLogout"
@@ -294,10 +384,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch, h } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { defineComponent, ref, computed, watch, h, onMounted } from "vue";
+import { useRoute } from "vue-router";
 import { useAuthStore } from "../stores/authStore";
 import { useThemeStore } from "../stores/themeStore";
+import { useNotificationStore } from "../stores/notificationStore";
 
 // Icon components
 const HomeIcon = {
@@ -408,34 +499,209 @@ const SettingsIcon = {
 export default defineComponent({
   name: "Navbar",
   setup() {
-    const router = useRouter();
     const route = useRoute();
     const authStore = useAuthStore();
     const themeStore = useThemeStore();
+    const notificationStore = useNotificationStore();
     const showUserMenu = ref(false);
     const showMobileMenu = ref(false);
+    const openMobileGroup = ref<string | null>(null);
 
-    const navItems = [
+    const CreditCardIcon = {
+  render: () =>
+    h(
+      "svg",
       {
-        name: "dashboard",
-        label: "Dashboard",
-        path: "/dashboard",
-        icon: HomeIcon,
+        fill: "none",
+        stroke: "currentColor",
+        viewBox: "0 0 24 24",
+        "stroke-width": "2",
       },
+      [
+        h("path", {
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+          d: "M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z",
+        }),
+      ],
+    ),
+};
+
+const CalendarIcon = {
+  render: () =>
+    h(
+      "svg",
+      {
+        fill: "none",
+        stroke: "currentColor",
+        viewBox: "0 0 24 24",
+        "stroke-width": "2",
+      },
+      [
+        h("path", {
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+          d: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+        }),
+      ],
+    ),
+};
+
+const TargetIcon = {
+  render: () =>
+    h(
+      "svg",
+      {
+        fill: "none",
+        stroke: "currentColor",
+        viewBox: "0 0 24 24",
+        "stroke-width": "2",
+      },
+      [
+        h("path", {
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+          d: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+        }),
+      ],
+    ),
+};
+
+const RepeatIcon = {
+  render: () =>
+    h(
+      "svg",
+      {
+        fill: "none",
+        stroke: "currentColor",
+        viewBox: "0 0 24 24",
+        "stroke-width": "2",
+      },
+      [
+        h("path", {
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+          d: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15",
+        }),
+      ],
+    ),
+};
+
+const ChartIcon = {
+  render: () =>
+    h(
+      "svg",
+      {
+        fill: "none",
+        stroke: "currentColor",
+        viewBox: "0 0 24 24",
+        "stroke-width": "2",
+      },
+      [
+        h("path", {
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+          d: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
+        }),
+      ],
+    ),
+};
+
+const TagIcon = {
+  render: () =>
+    h(
+      "svg",
+      {
+        fill: "none",
+        stroke: "currentColor",
+        viewBox: "0 0 24 24",
+        "stroke-width": "2",
+      },
+      [
+        h("path", {
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+          d: "M7 7h.01M7 3h5.586a1 1 0 01.707.293l7.414 7.414a1 1 0 010 1.414l-5.414 5.414a1 1 0 01-1.414 0L5.879 10.12a1 1 0 01-.293-.707V4a1 1 0 011-1z",
+        }),
+      ],
+    ),
+};
+
+const SavingsIcon = {
+  render: () =>
+    h(
+      "svg",
+      {
+        fill: "none",
+        stroke: "currentColor",
+        viewBox: "0 0 24 24",
+        "stroke-width": "2",
+      },
+      [
+        h("path", {
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+          d: "M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z",
+        }),
+      ],
+    ),
+};
+
+const AutomationIcon = {
+  render: () =>
+    h(
+      "svg",
+      {
+        fill: "none",
+        stroke: "currentColor",
+        viewBox: "0 0 24 24",
+        "stroke-width": "2",
+      },
+      [
+        h("path", {
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+          d: "M13 10V3L4 14h7v7l9-11h-7z",
+        }),
+      ],
+    ),
+};
+
+const BellIcon = {
+  render: () =>
+    h(
+      "svg",
+      {
+        fill: "none",
+        stroke: "currentColor",
+        viewBox: "0 0 24 24",
+        "stroke-width": "2",
+      },
+      [
+        h("path", {
+          "stroke-linecap": "round",
+          "stroke-linejoin": "round",
+          d: "M15 17h5l-1.405-1.405A2.003 2.003 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9",
+        }),
+      ],
+    ),
+};
+
+const navItems = [
+      { name: "dashboard", label: "Dashboard", path: "/dashboard", icon: HomeIcon },
       { name: "incomes", label: "Income", path: "/incomes", icon: ArrowUpIcon },
-      {
-        name: "expenses",
-        label: "Expenses",
-        path: "/expenses",
-        icon: ArrowDownIcon,
-      },
+      { name: "expenses", label: "Expenses", path: "/expenses", icon: ArrowDownIcon },
       { name: "budgets", label: "Budgets", path: "/budgets", icon: WalletIcon },
-      {
-        name: "settings",
-        label: "Settings",
-        path: "/settings",
-        icon: SettingsIcon,
-      },
+      { name: "accounts", label: "Accounts", path: "/accounts", icon: CreditCardIcon },
+      { name: "bills", label: "Bills", path: "/bills", icon: CalendarIcon },
+      { name: "goals", label: "Goals", path: "/goals", icon: TargetIcon },
+      { name: "recurring", label: "Recurring", path: "/recurring", icon: RepeatIcon },
+      { name: "insights", label: "Insights", path: "/insights", icon: ChartIcon },
+      { name: "tags", label: "Tags", path: "/tags", icon: TagIcon },
+      { name: "savings", label: "Savings", path: "/savings", icon: SavingsIcon },
+      { name: "automations", label: "Automations", path: "/automations", icon: AutomationIcon },
+      { name: "notifications", label: "Notifications", path: "/notifications", icon: BellIcon },
+      { name: "settings", label: "Settings", path: "/settings", icon: SettingsIcon },
     ];
 
     watch(
@@ -446,10 +712,40 @@ export default defineComponent({
       },
     );
 
+    const toggleMobileGroup = (name: string) => {
+      openMobileGroup.value = openMobileGroup.value === name ? null : name;
+    };
+
+    const navGroups = [
+      { name: "Overview", items: ["dashboard", "insights"] },
+      { name: "Money", items: ["incomes", "expenses", "budgets", "accounts"] },
+      { name: "Plans", items: ["bills", "goals", "savings", "recurring"] },
+      { name: "Tools", items: ["tags", "automations", "notifications"] },
+    ];
+
+    const groupedNav = computed(() =>
+      navGroups.map((group) => ({
+        name: group.name,
+        items: navItems.filter((item) => group.items.includes(item.name)),
+      })),
+    );
+
+    const isGroupActive = (group: { items: { path: string }[] }) =>
+      group.items.some((item) => item.path === route.path);
+
+    const refreshUnreadCount = () => {
+      if (authStore.isAuthenticated) {
+        notificationStore.fetchUnreadCount().catch(() => {});
+      }
+    };
+
+    onMounted(refreshUnreadCount);
+
+    watch(() => route.path, refreshUnreadCount);
+
     const handleLogout = () => {
       localStorage.setItem("accentColor", "#6366f1");
       authStore.logout();
-      router.push("/login");
     };
 
     const fullName = computed(() => {
@@ -469,9 +765,16 @@ export default defineComponent({
     return {
       authStore,
       themeStore,
+      notificationStore,
+      BellIcon,
+      SettingsIcon,
       showUserMenu,
       showMobileMenu,
+      openMobileGroup,
+      toggleMobileGroup,
       navItems,
+      groupedNav,
+      isGroupActive,
       handleLogout,
       fullName,
       initials,

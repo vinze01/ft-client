@@ -257,7 +257,7 @@
       <div v-if="modalVisible" class="modal-overlay" @click.self="closeModal">
         <div class="modal-content animate-scale-in">
           <div class="modal-header">
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-4 w-full">
               <div
                 class="modal-icon bg-gradient-to-br from-emerald-400 to-emerald-600 text-white"
               >
@@ -290,14 +290,14 @@
                   ></path>
                 </svg>
               </div>
-              <div>
+              <div class="flex-1">
                 <h3 class="text-lg font-bold text-gray-800 dark:text-white">
                   {{ editingId ? "Edit Income" : "Add New Income" }}
                 </h3>
               </div>
               <button
                 @click="closeModal"
-                class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500"
+                class="ml-auto flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500"
               >
                 <svg
                   class="w-5 h-5"
@@ -401,99 +401,137 @@
 
             <!-- Monthly Selection -->
             <div v-if="form.type === 'monthly'">
-              <label class="label">Month(s)</label>
-              <div class="relative">
-                <select
-                  v-model="form.months"
-                  multiple
-                  class="input h-40 appearance-none cursor-pointer"
-                >
-                  <option v-for="m in months" :key="m" :value="m">
-                    {{ m }}
-                  </option>
-                </select>
-                <div
-                  class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
-                >
-                  <svg
-                    class="w-5 h-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+              <div class="flex items-center justify-between mb-2">
+                <label class="label !mb-0">Month(s)</label>
+                <div class="flex gap-3">
+                  <button
+                    v-if="form.months.length === months.length"
+                    type="button"
+                    @click="deselectAllMonths"
+                    class="text-xs font-medium text-gray-500 dark:text-gray-400 hover:underline"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"
-                    ></path>
-                  </svg>
+                    Deselect all
+                  </button>
+                  <button
+                    v-else
+                    type="button"
+                    @click="selectAllMonths"
+                    class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
+                    Select all
+                  </button>
                 </div>
               </div>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Hold Ctrl/Cmd to select multiple months
-              </p>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <label
+                  v-for="m in months"
+                  :key="m"
+                  class="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600"
+                >
+                  <input
+                    type="checkbox"
+                    :value="m"
+                    v-model="form.months"
+                    class="w-4 h-4 rounded accent-emerald-600"
+                  />
+                  <span
+                    class="text-sm text-gray-600 dark:text-gray-300"
+                    >{{ m }}</span
+                  >
+                </label>
+              </div>
             </div>
 
             <!-- Bi-Monthly Selection (Quincena) -->
             <div v-if="form.type === 'bi-monthly'">
-              <label class="label">Month(s)</label>
-              <div class="relative mb-4">
-                <select
-                  v-model="form.months"
-                  multiple
-                  class="input h-32 appearance-none cursor-pointer"
-                >
-                  <option v-for="m in months" :key="m" :value="m">
-                    {{ m }}
-                  </option>
-                </select>
-                <div
-                  class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
-                >
-                  <svg
-                    class="w-5 h-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+              <div class="flex items-center justify-between mb-2">
+                <label class="label !mb-0">Month(s)</label>
+                <div class="flex gap-3">
+                  <button
+                    v-if="form.months.length === months.length"
+                    type="button"
+                    @click="deselectAllMonths"
+                    class="text-xs font-medium text-gray-500 dark:text-gray-400 hover:underline"
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"
-                    ></path>
-                  </svg>
+                    Deselect all
+                  </button>
+                  <button
+                    v-else
+                    type="button"
+                    @click="selectAllMonths"
+                    class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
+                    Select all
+                  </button>
                 </div>
               </div>
-
-              <label class="label">Pay Period (Quincena)</label>
-              <div class="relative">
-                <select
-                  v-model="form.halfMonths"
-                  multiple
-                  class="input h-24 appearance-none cursor-pointer"
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+                <label
+                  v-for="m in months"
+                  :key="m"
+                  class="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600"
                 >
-                  <option :value="1">1st Half (Days 1-15)</option>
-                  <option :value="2">2nd Half (Days 16-31)</option>
-                </select>
-                <div
-                  class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
-                >
-                  <svg
-                    class="w-5 h-5 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  <input
+                    type="checkbox"
+                    :value="m"
+                    v-model="form.months"
+                    class="w-4 h-4 rounded accent-emerald-600"
+                  />
+                  <span
+                    class="text-sm text-gray-600 dark:text-gray-300"
+                    >{{ m }}</span
                   >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"
-                    ></path>
-                  </svg>
+                </label>
+              </div>
+
+              <div class="flex items-center justify-between mb-2">
+                <label class="label !mb-0">Pay Period (Quincena)</label>
+                <div class="flex gap-3">
+                  <button
+                    v-if="form.halfMonths.length === 2"
+                    type="button"
+                    @click="deselectAllHalfMonths"
+                    class="text-xs font-medium text-gray-500 dark:text-gray-400 hover:underline"
+                  >
+                    Deselect all
+                  </button>
+                  <button
+                    v-else
+                    type="button"
+                    @click="selectAllHalfMonths"
+                    class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
+                    Select all
+                  </button>
                 </div>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <label
+                  class="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600"
+                >
+                  <input
+                    type="checkbox"
+                    :value="1"
+                    v-model="form.halfMonths"
+                    class="w-4 h-4 rounded accent-emerald-600"
+                  />
+                  <span class="text-sm text-gray-600 dark:text-gray-300"
+                    >1st Half (Days 1-15)</span
+                  >
+                </label>
+                <label
+                  class="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600"
+                >
+                  <input
+                    type="checkbox"
+                    :value="2"
+                    v-model="form.halfMonths"
+                    class="w-4 h-4 rounded accent-emerald-600"
+                  />
+                  <span class="text-sm text-gray-600 dark:text-gray-300"
+                    >2nd Half (Days 16-31)</span
+                  >
+                </label>
               </div>
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 In the Philippines, salaries are often paid in two installments:
@@ -797,6 +835,22 @@ export default defineComponent({
       }
     };
 
+    const selectAllMonths = () => {
+      form.months = [...months.value];
+    };
+
+    const deselectAllMonths = () => {
+      form.months = [];
+    };
+
+    const selectAllHalfMonths = () => {
+      form.halfMonths = [1, 2];
+    };
+
+    const deselectAllHalfMonths = () => {
+      form.halfMonths = [];
+    };
+
     onMounted(() => {
       fetchIncomes();
     });
@@ -814,6 +868,10 @@ export default defineComponent({
       form,
       monthOptions,
       halfMonthOptions,
+      selectAllMonths,
+      deselectAllMonths,
+      selectAllHalfMonths,
+      deselectAllHalfMonths,
       formatNumber,
       formatDate,
       formatType,

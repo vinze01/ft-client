@@ -10,8 +10,8 @@
         class="flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200"
         :class="[
           $route.path === item.path
-            ? 'text-[var(--accent-color)] bg-[var(--accent-50)] dark:bg-[var(--accent-900)]'
-            : 'text-gray-500 dark:text-white hover:text-[var(--accent-color)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-900)]',
+            ? 'bg-[var(--accent-color)] text-white shadow-sm'
+            : 'text-gray-500 dark:text-white hover:text-[var(--accent-color)] hover:bg-[var(--accent-50)] dark:hover:bg-[var(--accent-50)] dark:hover:text-white',
         ]"
       >
         <component :is="item.icon" class="w-6 h-6" />
