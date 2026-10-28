@@ -1,21 +1,13 @@
 <template>
   <div class="animate-fade-in">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-1">
-          Tags
-        </h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">
-          Organize your transactions with labels
-        </p>
-      </div>
-      <button @click="showAddModal = true" class="btn btn-primary">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-        </svg>
-        Add Tag
-      </button>
-    </div>
+    <PageHeader title="Tags" subtitle="Organize your transactions with labels">
+      <template #actions>
+        <button @click="showAddModal = true" class="btn btn-primary">
+          <component :is="PlusIcon" class="w-4 h-4" />
+          Add Tag
+        </button>
+      </template>
+    </PageHeader>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       <div
@@ -27,7 +19,7 @@
         <div class="flex items-start justify-between mb-3">
           <div class="flex items-center gap-2">
             <div class="w-4 h-4 rounded-full" :style="{ backgroundColor: tag.color }"></div>
-            <h3 class="font-semibold text-gray-800 dark:text-white">{{ tag.name }}</h3>
+            <h3 class="font-semibold text-ink">{{ tag.name }}</h3>
           </div>
           <span class="badge badge-neutral">{{ linkedCounts[tag.id] ?? '' }}</span>
         </div>
@@ -39,12 +31,12 @@
           <button @click="openLinkModal(tag.id)" class="btn btn-secondary flex-1 text-sm">
             Link
           </button>
-          <button @click="editTag(tag)" class="btn btn-ghost">
+          <button @click="editTag(tag)" class="btn btn-ghost" title="Edit tag" aria-label="Edit tag">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a3.5 3.5 0 11-4.95 4.95l-4.95 4.95a3.5 3.5 0 014.95 4.95l5.657 5.657a3.5 3.5 0 01-4.95 4.95l-5.657-5.657a3.5 3.5 0 00-4.95 0"></path>
             </svg>
           </button>
-          <button @click="deleteTag(tag.id)" class="btn btn-ghost text-red-500">
+          <button @click="deleteTag(tag.id)" class="btn btn-ghost" style="color: var(--expense)" title="Delete tag" aria-label="Delete tag">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1H6a1 1 0 00-1 1v3M4 7h16"></path>
             </svg>
@@ -53,20 +45,18 @@
       </div>
     </div>
 
-    <div v-if="tagStore.tags.length === 0 && !tagStore.loading" class="empty-state">
-      <div class="empty-state-icon">
-        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5.586a1 1 0 01.707.293l7.414 7.414a1 1 0 010 1.414l-5.414 5.414a1 1 0 01-1.414 0L5.879 10.12a1 1 0 01-.293-.707V4a1 1 0 011-1z"></path>
-        </svg>
-      </div>
-      <h3 class="empty-state-title">No tags yet</h3>
-      <p class="empty-state-description">Create tags to label and group your transactions</p>
-      <button @click="showAddModal = true" class="btn btn-primary mt-4">Add Tag</button>
-    </div>
+    <EmptyState
+      v-if="tagStore.tags.length === 0 && !tagStore.loading"
+      :icon="TagIcon"
+      title="No tags yet"
+      description="Create tags to label and group your transactions."
+      action-label="Add Tag"
+      @action="showAddModal = true"
+    />
 
     <div v-if="selectedTagId !== null" class="card p-6 mb-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Linked Transactions</h2>
+        <h2 class="text-lg font-semibold text-ink">Linked Transactions</h2>
         <div class="flex gap-2">
           <button
             @click="setLinkType('expense')"
@@ -84,7 +74,7 @@
           </button>
         </div>
       </div>
-      <div v-if="linkedTransactions.length === 0" class="text-gray-500 dark:text-gray-400 text-sm">
+      <div v-if="linkedTransactions.length === 0" class="text-ink-secondary text-sm">
         No {{ linkType }} transactions linked to this tag yet. Use Link to attach some.
       </div>
       <div v-else class="table-container">
@@ -98,28 +88,29 @@
           </thead>
           <tbody>
             <tr v-for="tx in linkedTransactions" :key="tx.id">
-              <td class="font-medium text-gray-800 dark:text-white">
+              <td class="font-medium text-ink">
                 {{ linkType === 'expense' ? tx.description : `${tx.month || ''} ${tx.year || ''}` }}
               </td>
-              <td class="font-bold">{{ formatCurrency(tx.amount) }}</td>
-              <td class="text-gray-500 dark:text-gray-400">{{ tx.category || tx.type || '-' }}</td>
+              <td class="font-semibold financial-amount">{{ formatCurrency(tx.amount) }}</td>
+              <td class="text-ink-secondary">{{ tx.category || tx.type || '-' }}</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <div v-if="showAddModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="closeModal">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md animate-fade-in">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-gray-800 dark:text-white">{{ editMode ? 'Edit' : 'Add' }} Tag</h3>
-          <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-if="showAddModal" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-content animate-scale-in" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <h3 class="section-title">{{ editMode ? 'Edit' : 'Add' }} Tag</h3>
+          <button @click="closeModal" class="p-1.5 rounded-lg hover:bg-[var(--surface-elevated)]" style="color: var(--text-muted)" aria-label="Close">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
 
+        <div class="modal-body">
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div>
             <label class="label">Tag Name</label>
@@ -129,30 +120,32 @@
           <div>
             <label class="label">Color</label>
             <div class="flex items-center gap-3">
-              <input v-model="form.color" type="color" class="w-12 h-12 rounded-xl cursor-pointer bg-transparent" />
-              <input v-model="form.color" type="text" class="input" placeholder="#6366f1" pattern="^#[0-9A-Fa-f]{6}$" />
+              <input v-model="form.color" type="color" class="w-12 h-12 rounded-lg cursor-pointer bg-transparent" />
+              <input v-model="form.color" type="text" class="input" placeholder="#059669" pattern="^#[0-9A-Fa-f]{6}$" />
             </div>
           </div>
 
-          <div class="flex gap-3">
+          <div class="flex gap-3 pt-2">
             <button type="button" @click="closeModal" class="btn btn-secondary flex-1">Cancel</button>
             <button type="submit" class="btn btn-primary flex-1">{{ editMode ? 'Update' : 'Create' }}</button>
           </div>
         </form>
+        </div>
       </div>
     </div>
 
-    <div v-if="showLinkModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="showLinkModal = false">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md animate-fade-in">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-gray-800 dark:text-white">Link Transactions</h3>
-          <button @click="showLinkModal = false" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-if="showLinkModal" class="modal-overlay" @click.self="showLinkModal = false">
+      <div class="modal-content animate-scale-in" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <h3 class="section-title">Link Transactions</h3>
+          <button @click="showLinkModal = false" class="p-1.5 rounded-lg hover:bg-[var(--surface-elevated)]" style="color: var(--text-muted)" aria-label="Close">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
 
+        <div class="modal-body">
         <div class="flex gap-2 mb-4">
           <button
             @click="setLinkType('expense')"
@@ -174,15 +167,15 @@
           <label
             v-for="tx in linkCandidates"
             :key="tx.id"
-            class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+            class="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--surface-elevated)] cursor-pointer"
           >
             <input v-model="selectedTxIds" :value="tx.id" type="checkbox" class="w-4 h-4" />
-            <span class="flex-1 text-sm text-gray-800 dark:text-white">
+            <span class="flex-1 text-sm text-ink">
               {{ linkType === 'expense' ? tx.description : `${tx.month || ''} ${tx.year || ''}` }}
             </span>
-            <span class="text-sm font-semibold">{{ formatCurrency(tx.amount) }}</span>
+            <span class="text-sm font-semibold financial-amount">{{ formatCurrency(tx.amount) }}</span>
           </label>
-          <p v-if="linkCandidates.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
+          <p v-if="linkCandidates.length === 0" class="text-sm text-ink-secondary">
             No {{ linkType }} records found.
           </p>
         </div>
@@ -190,6 +183,7 @@
         <div class="flex gap-3">
           <button @click="showLinkModal = false" class="btn btn-secondary flex-1">Cancel</button>
           <button @click="submitLink" :disabled="selectedTxIds.length === 0" class="btn btn-primary flex-1">Link Selected</button>
+        </div>
         </div>
       </div>
     </div>
@@ -202,11 +196,15 @@ import axios from 'axios';
 import { useTagStore, type Tag } from '../stores/tagStore';
 import { toast } from '../components/Toast.vue';
 import { confirm } from '../components/ConfirmModal.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EmptyState from '../components/EmptyState.vue';
+import { PlusIcon, TagIcon } from '../components/icons';
 
 const API_URL = 'http://localhost:3001/api';
 
 export default defineComponent({
   name: 'TagsView',
+  components: { PageHeader, EmptyState },
   setup() {
     const tagStore = useTagStore();
     const showAddModal = ref(false);
@@ -222,7 +220,7 @@ export default defineComponent({
     const form = reactive({
       id: null as number | null,
       name: '',
-      color: '#6366f1'
+      color: '#059669'
     });
 
     const formatCurrency = (amount: number) => {
@@ -282,7 +280,7 @@ export default defineComponent({
     const editTag = (tag: Tag) => {
       form.id = tag.id;
       form.name = tag.name;
-      form.color = tag.color || '#6366f1';
+      form.color = tag.color || '#059669';
       editMode.value = true;
       showAddModal.value = true;
     };
@@ -326,7 +324,7 @@ export default defineComponent({
       editMode.value = false;
       form.id = null;
       form.name = '';
-      form.color = '#6366f1';
+      form.color = '#059669';
     };
 
     onMounted(async () => {
@@ -357,7 +355,9 @@ export default defineComponent({
       editTag,
       deleteTag,
       handleSubmit,
-      closeModal
+      closeModal,
+      PlusIcon,
+      TagIcon
     };
   }
 });

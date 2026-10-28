@@ -1,24 +1,14 @@
 <template>
   <div class="animate-fade-in">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-1">
-          Automations
-        </h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">
-          Trigger actions automatically from rules
-        </p>
-      </div>
-      <div class="flex gap-2">
+    <PageHeader title="Automations" subtitle="Trigger actions automatically from rules">
+      <template #actions>
         <button @click="runAll" class="btn btn-secondary">Run All</button>
         <button @click="showAddModal = true" class="btn btn-primary">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-          </svg>
+          <component :is="PlusIcon" class="w-4 h-4" />
           Add Rule
         </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       <div
@@ -28,18 +18,18 @@
         :class="{ 'opacity-60': !rule.isActive }"
       >
         <div class="flex items-start justify-between mb-2">
-          <h3 class="font-semibold text-gray-800 dark:text-white">{{ rule.name }}</h3>
+          <h3 class="font-semibold text-ink">{{ rule.name }}</h3>
           <span class="badge" :class="rule.isActive ? 'badge-success' : 'badge-neutral'">
             {{ rule.isActive ? 'Active' : 'Paused' }}
           </span>
         </div>
-        <p v-if="rule.description" class="text-sm text-gray-500 dark:text-gray-400 mb-3">{{ rule.description }}</p>
+        <p v-if="rule.description" class="text-sm text-ink-secondary mb-3">{{ rule.description }}</p>
         <div class="flex flex-wrap gap-2 mb-3">
           <span class="badge badge-neutral">{{ formatTrigger(rule.triggerType) }}</span>
-          <span class="text-gray-400">→</span>
+          <span class="text-ink-muted">→</span>
           <span class="badge badge-warning">{{ formatAction(rule.actionType) }}</span>
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        <p class="text-xs text-ink-secondary mb-3">
           Ran {{ rule.executionCount }} time(s)
           <span v-if="rule.lastExecutedAt">· last {{ formatDate(rule.lastExecutedAt) }}</span>
         </p>
@@ -48,12 +38,12 @@
             {{ rule.isActive ? 'Pause' : 'Resume' }}
           </button>
           <button @click="openTestModal(rule.id)" class="btn btn-secondary flex-1 text-sm">Test</button>
-          <button @click="editRule(rule)" class="btn btn-ghost">
+          <button @click="editRule(rule)" class="btn btn-ghost" title="Edit rule" aria-label="Edit rule">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a3.5 3.5 0 11-4.95 4.95l-4.95 4.95a3.5 3.5 0 014.95 4.95l5.657 5.657a3.5 3.5 0 01-4.95 4.95l-5.657-5.657a3.5 3.5 0 00-4.95 0"></path>
             </svg>
           </button>
-          <button @click="deleteRule(rule.id)" class="btn btn-ghost text-red-500">
+          <button @click="deleteRule(rule.id)" class="btn btn-ghost" style="color: var(--expense)" title="Delete rule" aria-label="Delete rule">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1H6a1 1 0 00-1 1v3M4 7h16"></path>
             </svg>
@@ -62,28 +52,27 @@
       </div>
     </div>
 
-    <div v-if="automationStore.rules.length === 0 && !automationStore.loading" class="empty-state">
-      <div class="empty-state-icon">
-        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-        </svg>
-      </div>
-      <h3 class="empty-state-title">No automation rules yet</h3>
-      <p class="empty-state-description">Create rules to react to balances, due dates, and schedules</p>
-      <button @click="showAddModal = true" class="btn btn-primary mt-4">Add Rule</button>
-    </div>
+    <EmptyState
+      v-if="automationStore.rules.length === 0 && !automationStore.loading"
+      :icon="ZapIcon"
+      title="No automation rules yet"
+      description="Create rules to react to balances, due dates, and schedules."
+      action-label="Add Rule"
+      @action="showAddModal = true"
+    />
 
-    <div v-if="showAddModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="closeModal">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg animate-fade-in max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-gray-800 dark:text-white">{{ editMode ? 'Edit' : 'Add' }} Rule</h3>
-          <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-if="showAddModal" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-content animate-scale-in !max-w-lg" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <h3 class="section-title">{{ editMode ? 'Edit' : 'Add' }} Rule</h3>
+          <button @click="closeModal" class="p-1.5 rounded-lg hover:bg-[var(--surface-elevated)]" style="color: var(--text-muted)" aria-label="Close">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
 
+        <div class="modal-body">
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div>
             <label class="label">Rule Name</label>
@@ -125,7 +114,7 @@
               class="input font-mono text-sm"
               placeholder='{"field": "amount", "operator": "gt", "value": 100}'
             ></textarea>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p class="text-xs text-ink-muted mt-1">
               Operators: eq, ne, gt, lt, gte, lte, contains. Balance-low also reads "value" as threshold.
             </p>
           </div>
@@ -142,41 +131,43 @@
 
           <div class="flex items-center gap-2">
             <input v-model="form.isActive" type="checkbox" id="ruleActive" class="w-4 h-4" />
-            <label for="ruleActive" class="text-sm text-gray-600 dark:text-gray-300">Active</label>
+            <label for="ruleActive" class="text-sm text-ink-secondary">Active</label>
           </div>
 
-          <div class="flex gap-3">
+          <div class="flex gap-3 pt-2">
             <button type="button" @click="closeModal" class="btn btn-secondary flex-1">Cancel</button>
             <button type="submit" class="btn btn-primary flex-1">{{ editMode ? 'Update' : 'Create' }}</button>
           </div>
         </form>
+        </div>
       </div>
     </div>
 
-    <div v-if="showTestModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="showTestModal = false">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md animate-fade-in">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-gray-800 dark:text-white">Test Rule</h3>
-          <button @click="showTestModal = false" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-if="showTestModal" class="modal-overlay" @click.self="showTestModal = false">
+      <div class="modal-content animate-scale-in" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <h3 class="section-title">Test Rule</h3>
+          <button @click="showTestModal = false" class="p-1.5 rounded-lg hover:bg-[var(--surface-elevated)]" style="color: var(--text-muted)" aria-label="Close">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
 
+        <div class="modal-body">
         <div class="mb-4">
           <label class="label">Sample Event Data (JSON)</label>
           <textarea v-model="testDataText" rows="4" class="input font-mono text-sm" placeholder='{"amount": 150}'></textarea>
         </div>
 
-        <div v-if="testResult" class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 mb-4 text-sm">
-          <p class="text-gray-800 dark:text-white">
+        <div v-if="testResult" class="p-4 rounded-xl bg-surface-elevated mb-4 text-sm">
+          <p class="text-ink">
             Would trigger:
-            <span class="font-bold" :class="testResult.wouldTrigger ? 'text-emerald-600' : 'text-gray-500'">
+            <span class="font-semibold" :style="{ color: testResult.wouldTrigger ? 'var(--income)' : 'var(--text-muted)' }">
               {{ testResult.wouldTrigger ? 'Yes' : 'No' }}
             </span>
           </p>
-          <p v-if="testResult.actionResult" class="text-gray-500 dark:text-gray-400 mt-1 break-all">
+          <p v-if="testResult.actionResult" class="text-ink-secondary mt-1 break-all">
             {{ JSON.stringify(testResult.actionResult) }}
           </p>
         </div>
@@ -184,6 +175,7 @@
         <div class="flex gap-3">
           <button @click="showTestModal = false" class="btn btn-secondary flex-1">Close</button>
           <button @click="submitTest" class="btn btn-primary flex-1">Run Test</button>
+        </div>
         </div>
       </div>
     </div>
@@ -195,6 +187,9 @@ import { defineComponent, reactive, onMounted, ref } from 'vue';
 import { useAutomationStore, type AutomationRule } from '../stores/automationStore';
 import { toast } from '../components/Toast.vue';
 import { confirm } from '../components/ConfirmModal.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EmptyState from '../components/EmptyState.vue';
+import { PlusIcon, ZapIcon } from '../components/icons';
 
 const TRIGGER_LABELS: Record<string, string> = {
   transaction_added: 'Transaction Added',
@@ -213,6 +208,7 @@ const ACTION_LABELS: Record<string, string> = {
 
 export default defineComponent({
   name: 'AutomationsView',
+  components: { PageHeader, EmptyState },
   setup() {
     const automationStore = useAutomationStore();
     const showAddModal = ref(false);
@@ -391,7 +387,9 @@ export default defineComponent({
       openTestModal,
       submitTest,
       handleSubmit,
-      closeModal
+      closeModal,
+      PlusIcon,
+      ZapIcon
     };
   }
 });

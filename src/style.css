@@ -1,18 +1,72 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 
+/* ==========================================================================
+   Finance Tracker — Design System tokens
+   Source of truth: DESIGN_SYSTEM.md
+   Accent (--accent-*) is user-customizable at runtime via themeStore.
+   All other tokens are fixed semantic values and theme-aware.
+   ========================================================================== */
+
 :root {
-  --accent-color: #6366f1;
-  --accent-r: 99;
-  --accent-g: 102;
-  --accent-b: 241;
-  --accent-50: rgba(99, 102, 241, 0.1);
-  --accent-100: rgba(99, 102, 241, 0.2);
-  --accent-200: rgba(99, 102, 241, 0.3);
-  --accent-400: rgba(99, 102, 241, 0.5);
-  --accent-500: rgba(99, 102, 241, 0.6);
-  --accent-600: rgba(99, 102, 241, 0.7);
-  --accent-700: rgba(99, 102, 241, 0.8);
-  --accent-900: rgba(99, 102, 241, 0.9);
+  /* User accent (runtime-managed by themeStore; defaults to emerald) */
+  --accent-color: #059669;
+  --accent-r: 5;
+  --accent-g: 150;
+  --accent-b: 105;
+  --accent-50: rgba(5, 150, 105, 0.1);
+  --accent-100: rgba(5, 150, 105, 0.2);
+  --accent-200: rgba(5, 150, 105, 0.3);
+  --accent-400: rgba(5, 150, 105, 0.5);
+  --accent-500: rgba(5, 150, 105, 0.6);
+  --accent-600: rgba(5, 150, 105, 0.7);
+  --accent-700: rgba(5, 150, 105, 0.8);
+  --accent-900: rgba(5, 150, 105, 0.9);
+
+  /* Light theme — semantic surfaces & text */
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-elevated: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* Semantic finance colors (independent of user accent) */
+  --income: #059669;
+  --income-soft: rgba(5, 150, 105, 0.1);
+  --expense: #dc5c5c;
+  --expense-soft: rgba(220, 92, 92, 0.12);
+  --warning: #d97706;
+  --warning-soft: rgba(217, 119, 6, 0.12);
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-card-hover: 0 4px 12px -2px rgba(15, 23, 42, 0.1),
+    0 2px 4px -2px rgba(15, 23, 42, 0.06);
+  --shadow-overlay: 0 20px 40px -12px rgba(15, 23, 42, 0.25);
+}
+
+html.dark {
+  --bg: #0b1120;
+  --surface: #151e2e;
+  --surface-elevated: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border: #293548;
+  --border-strong: #3b4a63;
+
+  --income: #34d399;
+  --income-soft: rgba(52, 211, 153, 0.12);
+  --expense: #fb7185;
+  --expense-soft: rgba(251, 113, 133, 0.12);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.12);
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-card-hover: 0 6px 16px -4px rgba(0, 0, 0, 0.45);
+  --shadow-overlay: 0 20px 40px -12px rgba(0, 0, 0, 0.6);
 }
 
 @tailwind base;
@@ -34,7 +88,7 @@
   *::before,
   *::after {
     transition-property: background-color, border-color, color, fill, stroke;
-    transition-duration: 0.2s;
+    transition-duration: 0.15s;
     transition-timing-function: ease-in-out;
   }
 
@@ -44,6 +98,7 @@
       -apple-system,
       BlinkMacSystemFont,
       sans-serif;
+    font-size: 14px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -51,167 +106,285 @@
   #app {
     min-height: 100vh;
   }
+
+  /* Visible keyboard focus for accessibility (WCAG 2.2 AA) */
+  :focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+  }
+
+  .input:focus-visible {
+    outline: none;
+  }
+
+  /* Subtle scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 @layer components {
+  /* ---------- Typography ---------- */
+  .page-title {
+    @apply text-[28px] leading-8 font-semibold tracking-tight;
+    color: var(--text-primary);
+  }
+
+  .section-title {
+    @apply text-lg font-semibold tracking-tight;
+    color: var(--text-primary);
+  }
+
+  .card-title {
+    @apply text-sm font-medium;
+    color: var(--text-secondary);
+  }
+
+  .financial-amount {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.025em;
+  }
+
+  /* ---------- Buttons ---------- */
   .btn {
-    @apply px-4 py-3 rounded-xl font-semibold transition-all duration-200 inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-base;
+    @apply px-4 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed select-none;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease,
+      color 150ms ease,
+      box-shadow 150ms ease,
+      transform 100ms ease,
+      filter 150ms ease;
   }
 
   .btn-sm {
-    @apply px-3 py-2 text-sm;
+    @apply px-3 py-2 text-[13px];
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, var(--accent-color), var(--accent-700));
-    @apply text-white shadow-md hover:shadow-lg active:scale-[0.98];
-    box-shadow: 0 4px 14px -3px var(--accent-400);
+    background-color: var(--accent-color);
+    @apply text-white;
   }
 
-  .btn-primary:hover {
-    filter: brightness(1.1);
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(0.92);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.98);
   }
 
   .btn-secondary {
-    @apply bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--surface-elevated);
+    border-color: var(--border-strong);
+  }
+
+  .btn-secondary:active:not(:disabled) {
+    transform: scale(0.98);
   }
 
   .btn-danger {
-    @apply bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50;
+    background-color: var(--expense-soft);
+    color: var(--expense);
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    filter: brightness(0.95);
+    background-color: var(--expense-soft);
+    box-shadow: inset 0 0 0 1px var(--expense);
   }
 
   .btn-ghost {
-    @apply text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800;
+    color: var(--text-secondary);
   }
 
+  .btn-ghost:hover:not(:disabled) {
+    background-color: var(--surface-elevated);
+    color: var(--text-primary);
+  }
+
+  /* ---------- Cards ---------- */
   .card {
-    @apply bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-card border border-gray-100 dark:border-gray-700 transition-all duration-300;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-card);
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease;
   }
 
   .card-accent {
-    border-color: var(--accent-200);
+    border-color: var(--accent-400);
   }
 
-  html.dark .card {
-    border-color: var(--accent-900);
+  .card-hover:hover {
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
   }
 
-  .card-hover {
-    @apply hover:shadow-card-hover hover:-translate-y-1;
-  }
-
+  /* ---------- Inputs ---------- */
   .input {
-    @apply w-full px-4 py-3 bg-gray-50/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200 text-base;
+    @apply w-full px-3.5 py-2.5 rounded-lg text-sm;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      background-color 150ms ease;
+  }
+
+  .input::placeholder {
+    color: var(--text-muted);
   }
 
   .input:focus {
-    @apply outline-none border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800;
-    box-shadow: 0 0 0 3px var(--accent-200);
+    outline: none;
+    border-color: var(--accent-color);
+    background-color: var(--surface);
+    box-shadow: 0 0 0 3px var(--accent-100);
+  }
+
+  .input:disabled {
+    background-color: var(--surface-elevated);
+    color: var(--text-muted);
+    cursor: not-allowed;
   }
 
   .label {
-    @apply block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1.5;
+    @apply block text-[13px] font-medium mb-1.5;
+    color: var(--text-secondary);
   }
 
+  /* ---------- Badges ---------- */
   .badge {
-    @apply inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium;
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium whitespace-nowrap;
   }
 
   .badge-success {
-    @apply bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400;
+    background-color: var(--income-soft);
+    color: var(--income);
   }
 
   .badge-danger {
-    @apply bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400;
+    background-color: var(--expense-soft);
+    color: var(--expense);
   }
 
   .badge-warning {
-    @apply bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400;
+    background-color: var(--warning-soft);
+    color: var(--warning);
   }
 
   .badge-neutral {
-    @apply bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300;
+    background-color: var(--surface-elevated);
+    color: var(--text-secondary);
   }
 
+  /* ---------- Tables ---------- */
   .table-container {
-    @apply overflow-hidden rounded-2xl border border-gray-100/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm;
+    @apply overflow-x-auto rounded-xl;
+    border: 1px solid var(--border);
+    background-color: var(--surface);
   }
 
   .table {
     @apply w-full text-sm;
+    /* Keep columns readable on tablet: the container scrolls instead of squeezing */
+    min-width: 560px;
   }
 
   .table th {
-    @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider bg-gray-50/80 dark:bg-gray-700/50;
-    color: var(--accent-700);
-  }
-
-  html.dark .table th {
-    color: var(--accent-400);
+    @apply px-4 py-2.5 text-left text-xs font-semibold;
+    color: var(--text-muted);
+    background-color: var(--surface-elevated);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
   }
 
   .table td {
-    @apply px-4 py-4 border-t border-gray-100/50 dark:border-gray-700/50;
+    @apply px-4 py-3;
+    border-top: 1px solid var(--border);
+    color: var(--text-primary);
   }
 
   .table tr:hover td {
-    @apply bg-gray-50/50 dark:bg-gray-700/30;
+    background-color: var(--surface-elevated);
   }
 
   .table tr.active td {
     background-color: var(--accent-50);
   }
 
-  html.dark .table tr.active td {
-    background-color: var(--accent-900);
-  }
-
+  /* ---------- Empty states ---------- */
   .empty-state {
-    @apply flex flex-col items-center justify-center py-12 md:py-16 text-center;
+    @apply flex flex-col items-center justify-center py-10 md:py-14 text-center px-4;
   }
 
   .empty-state-icon {
-    @apply w-16 h-16 md:w-20 md:h-20 text-gray-300 dark:text-gray-600 mb-4;
+    @apply w-10 h-10 mb-3;
+    color: var(--text-muted);
   }
 
   .empty-state-title {
-    @apply text-lg md:text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2;
+    @apply text-sm font-semibold mb-1;
+    color: var(--text-primary);
   }
 
   .empty-state-description {
-    @apply text-sm text-gray-500 dark:text-gray-400;
+    @apply text-[13px] max-w-sm;
+    color: var(--text-secondary);
   }
 
+  /* ---------- Stat cards ---------- */
   .stat-card {
-    @apply bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-2xl shadow-card border border-gray-100 dark:border-gray-700 p-4 md:p-6 relative overflow-hidden;
-  }
-
-  .stat-card::before {
-    content: "";
-    height: 3px;
-    background: linear-gradient(90deg, var(--accent-color), var(--accent-700));
-    @apply absolute top-0 left-0 right-0;
-  }
-
-  html.dark .stat-card::before {
-    height: 2px;
-    opacity: 0.8;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-card);
+    @apply p-5 relative;
   }
 
   .stat-icon {
-    @apply w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center text-2xl shadow-lg;
+    @apply w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0;
   }
 
+  /* ---------- Progress ---------- */
   .progress-bar {
-    @apply h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden;
+    @apply h-1.5 rounded-full overflow-hidden;
+    background-color: var(--surface-elevated);
   }
 
   .progress-fill {
-    @apply h-full rounded-full transition-all duration-700 ease-out;
+    @apply h-full rounded-full;
+    transition: width 450ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* ---------- Mobile list cards ---------- */
   .mobile-card {
-    @apply bg-white dark:bg-gray-800 rounded-xl shadow-card border border-gray-100 dark:border-gray-700 p-4 mb-3;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    @apply p-4 mb-3;
   }
 
   .mobile-card-header {
@@ -219,38 +392,45 @@
   }
 
   .mobile-card-amount {
-    @apply text-xl font-bold text-gray-800 dark:text-white;
+    @apply text-xl font-semibold flex-shrink-0;
+    color: var(--text-primary);
   }
 
   .mobile-card-details {
-    @apply flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400;
+    @apply flex items-center gap-3 text-sm;
+    color: var(--text-secondary);
   }
 
-  /* Enhanced Modal Styles */
+  /* ---------- Modals ---------- */
   .modal-overlay {
-    @apply fixed inset-0 bg-black/50 flex items-end md:items-center justify-center z-50 p-0 md:p-4;
+    @apply fixed inset-0 bg-black/50 dark:bg-black/60 flex items-end md:items-center justify-center z-50 p-0 md:p-4;
   }
 
   .modal-content {
-    @apply bg-white dark:bg-gray-800 rounded-t-3xl md:rounded-3xl shadow-2xl max-w-lg w-full max-h-[85vh] md:max-h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-overlay);
+    @apply rounded-t-2xl md:rounded-2xl max-w-lg w-full max-h-[85vh] md:max-h-[90vh] flex flex-col;
     overflow: hidden !important;
   }
 
   .modal-header {
-    @apply px-4 md:px-6 py-4 md:py-5 border-b border-gray-100 dark:border-gray-700 flex-shrink-0 flex items-center justify-between;
+    @apply px-4 md:px-5 py-4 flex-shrink-0 flex items-center justify-between;
+    border-bottom: 1px solid var(--border);
   }
 
   .modal-body {
-    @apply px-4 md:px-6 py-4 md:py-5 overflow-y-auto flex-1;
+    @apply px-4 md:px-5 py-4 overflow-y-auto flex-1;
     max-height: calc(85vh - 140px);
   }
 
   .modal-footer {
-    @apply px-4 md:px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex-shrink-0 flex items-center justify-end gap-3;
+    @apply px-4 md:px-5 py-4 flex-shrink-0 flex items-center justify-end gap-2;
+    border-top: 1px solid var(--border);
   }
 
   .modal-icon {
-    @apply w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-lg;
+    @apply w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0;
   }
 
   .modal-input-group {
@@ -258,67 +438,29 @@
   }
 
   .modal-input-icon {
-    @apply absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500;
+    @apply absolute left-3.5 top-1/2 -translate-y-1/2;
+    color: var(--text-muted);
+  }
+
+  /* ---------- Skeletons ---------- */
+  .skeleton {
+    border-radius: 6px;
+    background-color: var(--surface-elevated);
+    @apply animate-pulse;
   }
 }
 
-/* Background gradient pattern */
-.bg-pattern {
-  background-color: #f8fafc;
-  background-image:
-    radial-gradient(
-      ellipse at top left,
-      rgba(99, 102, 241, 0.08) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      ellipse at bottom right,
-      rgba(168, 85, 247, 0.08) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      ellipse at top right,
-      rgba(236, 72, 153, 0.05) 0%,
-      transparent 40%
-    ),
-    linear-gradient(180deg, transparent 0%, rgba(99, 102, 241, 0.02) 100%);
-}
-
-html.dark .bg-pattern {
-  background-color: #111827;
-  background-image:
-    radial-gradient(
-      ellipse at top left,
-      rgba(99, 102, 241, 0.15) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      ellipse at bottom right,
-      rgba(168, 85, 247, 0.15) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      ellipse at top right,
-      rgba(236, 72, 153, 0.1) 0%,
-      transparent 40%
-    ),
-    linear-gradient(180deg, transparent 0%, rgba(99, 102, 241, 0.05) 100%);
-}
-
-html.dark body {
-  @apply bg-gray-900 text-gray-100;
-}
-
+/* ---------- Animations ---------- */
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
-}
-
-.animate-scale-in {
   animation: fadeIn 0.2s ease-out;
 }
 
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out;
+}
+
 .animate-slide-up {
-  animation: slideUp 0.3s ease-out;
+  animation: slideUp 0.25s ease-out;
 }
 
 @keyframes fadeIn {
@@ -330,10 +472,21 @@ html.dark body {
   }
 }
 
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -341,16 +494,7 @@ html.dark body {
   }
 }
 
-/* Glassmorphism utilities */
-.glass {
-  @apply bg-white/70 backdrop-blur-md border border-white/20;
-}
-
-.glass-card {
-  @apply bg-white/80 backdrop-blur-xl shadow-xl border border-white/30;
-}
-
-/* Responsive table - hidden on mobile, visible on desktop */
+/* ---------- Responsive table / mobile cards ---------- */
 @media (max-width: 767px) {
   .desktop-table {
     display: none;
@@ -368,5 +512,20 @@ html.dark body {
 
   .mobile-card-list {
     display: none;
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
   }
 }

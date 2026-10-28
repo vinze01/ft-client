@@ -1,38 +1,18 @@
 <template>
   <div class="animate-fade-in">
     <!-- Page Header -->
-    <div
-      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
-    >
-      <div>
-        <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-1">
-          Income
-        </h1>
-        <p class="text-gray-500 dark:text-gray-400">
-          Track your salary and income by period
-        </p>
-      </div>
-      <button @click="showModal()" class="btn btn-primary shadow-lg">
-        <svg
-          class="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          ></path>
-        </svg>
-        Add Income
-      </button>
-    </div>
+    <PageHeader title="Income" subtitle="Track your salary and income by period">
+      <template #actions>
+        <button @click="showModal()" class="btn btn-primary">
+          <component :is="PlusIcon" class="w-4 h-4" />
+          Add Income
+        </button>
+      </template>
+    </PageHeader>
 
     <!-- Filters -->
     <div class="card p-4 mb-6">
-      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <select v-model="filters.type" @change="fetchIncomes" class="input">
           <option value="">All Types</option>
           <option value="monthly">Monthly</option>
@@ -78,6 +58,7 @@
               <th>Type</th>
               <th>Amount</th>
               <th>Period</th>
+              <th>Category</th>
               <th>Created</th>
               <th>Updated</th>
               <th class="text-right">Actions</th>
@@ -98,23 +79,32 @@
                 </span>
               </td>
               <td>
-                <span class="font-bold text-emerald-600"
+                <span class="font-semibold text-income financial-amount"
                   >+₱{{ formatNumber(income.amount) }}</span
                 >
               </td>
-              <td class="text-gray-500 dark:text-gray-400">
+              <td class="text-ink-secondary">
                 {{ getPeriodLabel(income) }}
               </td>
-              <td class="text-gray-500 dark:text-gray-400">
+              <td class="text-ink-secondary">
+                <template v-if="income.category || income.note">
+                  <span v-if="income.category" class="font-medium text-ink-secondary">{{ income.category }}</span>
+                  <p v-if="income.note" class="text-xs text-ink-muted truncate max-w-[180px]" :title="income.note">
+                    {{ income.note }}
+                  </p>
+                </template>
+                <template v-else>—</template>
+              </td>
+              <td class="text-ink-secondary">
                 {{ income.createdAt ? formatDate(income.createdAt) : "-" }}
               </td>
-              <td class="text-gray-500 dark:text-gray-400">
+              <td class="text-ink-secondary">
                 {{ income.updatedAt ? formatDate(income.updatedAt) : "-" }}
               </td>
               <td>
                 <button
                   @click="editIncome(income)"
-                  class="p-2 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+                  class="p-2 rounded-lg hover:bg-[var(--accent-50)] text-ink-muted hover:text-[var(--accent-color)] transition-all"
                 >
                   <svg
                     class="w-4 h-4"
@@ -132,7 +122,7 @@
                 </button>
                 <button
                   @click="confirmDelete(income)"
-                  class="p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/20 text-gray-400 dark:text-gray-500 hover:text-rose-600 dark:hover:text-rose-400 transition-all"
+                  class="p-2 rounded-lg hover:bg-[var(--expense-soft)] text-ink-muted hover:text-[var(--expense)] transition-all"
                 >
                   <svg
                     class="w-4 h-4"
@@ -161,23 +151,30 @@
         <div class="mobile-card-header">
           <div>
             <span
-              class="text-xs px-2 py-0.5 rounded"
+              class="badge"
               :class="{
-                'bg-emerald-100 text-emerald-700': income.type === 'monthly',
-                'bg-amber-100 text-amber-700': income.type === 'yearly',
-                'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200':
-                  income.type === 'bi-monthly',
+                'badge-success': income.type === 'monthly',
+                'badge-warning': income.type === 'yearly',
+                'badge-neutral': income.type === 'bi-monthly',
               }"
             >
               {{ formatType(income.type) }}
             </span>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p class="text-sm text-ink-secondary mt-1">
               {{ getPeriodLabel(income) }}
+            </p>
+            <p
+              v-if="income.category || income.note"
+              class="text-xs text-ink-muted mt-1 truncate max-w-[200px]"
+            >
+              <span v-if="income.category">{{ income.category }}</span>
+              <span v-if="income.category && income.note"> · </span>
+              <span v-if="income.note">{{ income.note }}</span>
             </p>
             <div class="flex gap-2 mt-2">
               <button
                 @click="editIncome(income)"
-                class="p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400"
+                class="p-2 rounded-lg hover:bg-[var(--accent-50)] text-ink-muted hover:text-[var(--accent-color)]"
               >
                 <svg
                   class="w-4 h-4"
@@ -195,7 +192,7 @@
               </button>
               <button
                 @click="confirmDelete(income)"
-                class="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-gray-400 dark:text-gray-500 hover:text-rose-600 dark:hover:text-rose-400"
+                class="p-2 rounded-lg hover:bg-[var(--expense-soft)] text-ink-muted hover:text-[var(--expense)]"
               >
                 <svg
                   class="w-4 h-4"
@@ -216,40 +213,25 @@
         </div>
       </div>
 
-      <div v-if="incomes.length === 0" class="empty-state py-12">
-        <div
-          class="w-16 h-16 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center mb-4"
-        >
-          <svg
-            class="w-8 h-8 text-emerald-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.5"
-              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
-          </svg>
-        </div>
-        <p class="empty-state-title">No incomes found</p>
-        <p class="empty-state-description">
-          Start tracking your income by adding one
-        </p>
-      </div>
+      <EmptyState
+        v-if="incomes.length === 0"
+        :icon="WalletIcon"
+        title="No incomes found"
+        description="Start tracking your income by adding one."
+        action-label="Add Income"
+        @action="showModal()"
+      />
     </div>
 
     <!-- Desktop Empty State -->
-    <div
-      v-if="incomes.length === 0"
-      class="card hidden md:block empty-state py-16"
-    >
-      <p class="empty-state-title">No income recorded</p>
-      <p class="empty-state-description">
-        Start adding your salary and income sources
-      </p>
+    <div v-if="incomes.length === 0" class="card hidden md:block">
+      <EmptyState
+        :icon="WalletIcon"
+        title="No income recorded"
+        description="Start adding your salary and income sources."
+        action-label="Add Income"
+        @action="showModal()"
+      />
     </div>
 
     <!-- Modal -->
@@ -259,7 +241,7 @@
           <div class="modal-header">
             <div class="flex items-center gap-4 w-full">
               <div
-                class="modal-icon bg-gradient-to-br from-emerald-400 to-emerald-600 text-white"
+                class="modal-icon bg-income-light text-income"
               >
                 <svg
                   v-if="!editingId"
@@ -291,13 +273,13 @@
                 </svg>
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+                <h3 class="text-lg font-semibold" style="color: var(--text-primary)">
                   {{ editingId ? "Edit Income" : "Add New Income" }}
                 </h3>
               </div>
               <button
                 @click="closeModal"
-                class="ml-auto flex-shrink-0 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 dark:text-gray-500"
+                class="ml-auto flex-shrink-0 p-2 rounded-lg hover:bg-[var(--surface-elevated)] text-ink-muted"
               >
                 <svg
                   class="w-5 h-5"
@@ -329,8 +311,8 @@
                   class="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all border"
                   :class="
                     form.type === t.value
-                      ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
-                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                      ? 'bg-[var(--accent-50)] border-[var(--accent-color)] text-[var(--accent-color)]'
+                      : 'border-line text-ink-secondary hover:border-line-strong'
                   "
                 >
                   {{ t.label }}
@@ -367,6 +349,42 @@
               </div>
             </div>
 
+            <!-- Account Selection (optional) -->
+            <div>
+              <label class="label">Account (Optional)</label>
+              <select
+                v-model="form.accountId"
+                class="input appearance-none cursor-pointer"
+              >
+                <option :value="null">No account</option>
+                <option v-for="acc in accounts" :key="acc.id" :value="acc.id">
+                  {{ acc.name }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Category (optional) -->
+            <div>
+              <label class="label">Category (Optional)</label>
+              <input
+                v-model="form.category"
+                type="text"
+                class="input"
+                placeholder="Salary, Business, Gift..."
+              />
+            </div>
+
+            <!-- Note (optional) -->
+            <div>
+              <label class="label">Note (Optional)</label>
+              <textarea
+                v-model="form.note"
+                class="input"
+                rows="2"
+                placeholder="e.g. 13th month pay"
+              ></textarea>
+            </div>
+
             <!-- Year Selection -->
             <div>
               <label class="label">Year</label>
@@ -383,7 +401,7 @@
                   class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
                 >
                   <svg
-                    class="w-5 h-5 text-gray-400"
+                    class="w-5 h-5 text-ink-muted"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -408,7 +426,7 @@
                     v-if="form.months.length === months.length"
                     type="button"
                     @click="deselectAllMonths"
-                    class="text-xs font-medium text-gray-500 dark:text-gray-400 hover:underline"
+                    class="text-xs font-medium text-ink-secondary hover:underline"
                   >
                     Deselect all
                   </button>
@@ -416,7 +434,7 @@
                     v-else
                     type="button"
                     @click="selectAllMonths"
-                    class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+                    class="text-xs font-medium hover:underline" style="color: var(--accent-color)"
                   >
                     Select all
                   </button>
@@ -426,7 +444,7 @@
                 <label
                   v-for="m in months"
                   :key="m"
-                  class="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--border)] cursor-pointer hover:border-[var(--border-strong)]"
                 >
                   <input
                     type="checkbox"
@@ -435,7 +453,7 @@
                     class="w-4 h-4 rounded accent-emerald-600"
                   />
                   <span
-                    class="text-sm text-gray-600 dark:text-gray-300"
+                    class="text-sm text-ink-secondary"
                     >{{ m }}</span
                   >
                 </label>
@@ -451,7 +469,7 @@
                     v-if="form.months.length === months.length"
                     type="button"
                     @click="deselectAllMonths"
-                    class="text-xs font-medium text-gray-500 dark:text-gray-400 hover:underline"
+                    class="text-xs font-medium text-ink-secondary hover:underline"
                   >
                     Deselect all
                   </button>
@@ -459,7 +477,7 @@
                     v-else
                     type="button"
                     @click="selectAllMonths"
-                    class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+                    class="text-xs font-medium hover:underline" style="color: var(--accent-color)"
                   >
                     Select all
                   </button>
@@ -469,7 +487,7 @@
                 <label
                   v-for="m in months"
                   :key="m"
-                  class="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--border)] cursor-pointer hover:border-[var(--border-strong)]"
                 >
                   <input
                     type="checkbox"
@@ -478,7 +496,7 @@
                     class="w-4 h-4 rounded accent-emerald-600"
                   />
                   <span
-                    class="text-sm text-gray-600 dark:text-gray-300"
+                    class="text-sm text-ink-secondary"
                     >{{ m }}</span
                   >
                 </label>
@@ -491,7 +509,7 @@
                     v-if="form.halfMonths.length === 2"
                     type="button"
                     @click="deselectAllHalfMonths"
-                    class="text-xs font-medium text-gray-500 dark:text-gray-400 hover:underline"
+                    class="text-xs font-medium text-ink-secondary hover:underline"
                   >
                     Deselect all
                   </button>
@@ -499,7 +517,7 @@
                     v-else
                     type="button"
                     @click="selectAllHalfMonths"
-                    class="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline"
+                    class="text-xs font-medium hover:underline" style="color: var(--accent-color)"
                   >
                     Select all
                   </button>
@@ -507,7 +525,7 @@
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <label
-                  class="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--border)] cursor-pointer hover:border-[var(--border-strong)]"
                 >
                   <input
                     type="checkbox"
@@ -515,12 +533,12 @@
                     v-model="form.halfMonths"
                     class="w-4 h-4 rounded accent-emerald-600"
                   />
-                  <span class="text-sm text-gray-600 dark:text-gray-300"
+                  <span class="text-sm text-ink-secondary"
                     >1st Half (Days 1-15)</span
                   >
                 </label>
                 <label
-                  class="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-gray-300 dark:hover:border-gray-600"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--border)] cursor-pointer hover:border-[var(--border-strong)]"
                 >
                   <input
                     type="checkbox"
@@ -528,12 +546,12 @@
                     v-model="form.halfMonths"
                     class="w-4 h-4 rounded accent-emerald-600"
                   />
-                  <span class="text-sm text-gray-600 dark:text-gray-300"
+                  <span class="text-sm text-ink-secondary"
                     >2nd Half (Days 16-31)</span
                   >
                 </label>
               </div>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p class="text-xs text-ink-secondary mt-1">
                 In the Philippines, salaries are often paid in two installments:
                 1st half (1-15) and 2nd half (16-31)
               </p>
@@ -587,6 +605,9 @@ import { confirm } from "../components/ConfirmModal.vue";
 import dayjs from "dayjs";
 import axios from "axios";
 import type { Income, IncomeInput, IncomeType, HalfMonth } from "../types";
+import PageHeader from "../components/PageHeader.vue";
+import EmptyState from "../components/EmptyState.vue";
+import { PlusIcon, WalletIcon } from "../components/icons";
 
 const API_URL = "http://localhost:3001/api";
 
@@ -613,6 +634,7 @@ const INCOME_TYPES = [
 
 export default defineComponent({
   name: "IncomesView",
+  components: { PageHeader, EmptyState },
   setup() {
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
@@ -623,6 +645,7 @@ export default defineComponent({
     const editingId = ref<number | null>(null);
     const incomes = ref<Income[]>([]);
     const months = ref(MONTHS);
+    const accounts = ref<{ id: number; name: string }[]>([]);
     const incomeTypes = ref(
       INCOME_TYPES as { value: IncomeType; label: string }[],
     );
@@ -640,6 +663,9 @@ export default defineComponent({
       year: currentYear,
       months: [],
       halfMonths: [],
+      accountId: null,
+      category: "",
+      note: "",
     });
 
     const monthOptions = computed(() =>
@@ -724,6 +750,19 @@ export default defineComponent({
       }
     };
 
+    const fetchAccounts = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get<{ id: number; name: string }[]>(
+          `${API_URL}/accounts`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        accounts.value = response.data;
+      } catch {
+        // Account linking is optional; leave the dropdown empty on failure.
+      }
+    };
+
     const showModal = () => {
       editingId.value = null;
       Object.assign(form, {
@@ -732,6 +771,9 @@ export default defineComponent({
         year: currentYear,
         months: [],
         halfMonths: [1, 2],
+        accountId: null,
+        category: "",
+        note: "",
       });
       modalVisible.value = true;
     };
@@ -744,6 +786,9 @@ export default defineComponent({
         year: income.year,
         months: income.month ? [income.month] : [],
         halfMonths: income.halfMonth ? [income.halfMonth] : [],
+        accountId: income.accountId ?? null,
+        category: income.category || "",
+        note: income.note || "",
       });
       modalVisible.value = true;
     };
@@ -788,6 +833,9 @@ export default defineComponent({
               ? form.months
               : [],
           halfMonths: form.type === "bi-monthly" ? form.halfMonths : [],
+          accountId: form.accountId || null,
+          category: form.category || null,
+          note: form.note || null,
         };
 
         if (editingId.value) {
@@ -853,6 +901,7 @@ export default defineComponent({
 
     onMounted(() => {
       fetchIncomes();
+      fetchAccounts();
     });
 
     return {
@@ -862,6 +911,7 @@ export default defineComponent({
       editingId,
       incomes,
       months,
+      accounts,
       incomeTypes,
       years,
       filters,
@@ -882,6 +932,8 @@ export default defineComponent({
       closeModal,
       handleSubmit,
       confirmDelete,
+      PlusIcon,
+      WalletIcon,
     };
   },
 });

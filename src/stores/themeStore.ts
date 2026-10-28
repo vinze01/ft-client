@@ -5,18 +5,18 @@ interface ThemeState {
   accentColor: string;
 }
 
-const DEFAULT_ACCENT = "#6366f1";
+const DEFAULT_ACCENT = "#059669";
 const PRESET_COLORS = [
-  "#6366f1", // Indigo (default)
+  "#059669", // Emerald (default)
+  "#10b981", // Green
+  "#14b8a6", // Teal
+  "#0ea5e9", // Sky
+  "#3b82f6", // Blue
   "#8b5cf6", // Violet
   "#ec4899", // Pink
   "#ef4444", // Red
   "#f97316", // Orange
   "#eab308", // Yellow
-  "#22c55e", // Green
-  "#14b8a6", // Teal
-  "#0ea5e9", // Sky
-  "#3b82f6", // Blue
 ];
 
 export const useThemeStore = defineStore("theme", {

@@ -32,6 +32,8 @@ export interface Expense {
   category: string;
   date: string;
   userId: number;
+  accountId?: number;
+  note?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -41,6 +43,8 @@ export interface ExpenseInput {
   amount: number;
   category: string;
   date: string;
+  accountId?: number | null;
+  note?: string | null;
 }
 
 export type IncomeType = "monthly" | "yearly" | "bi-monthly";
@@ -54,6 +58,9 @@ export interface Income {
   year: number;
   halfMonth: HalfMonth | null;
   userId: number;
+  accountId?: number;
+  note?: string;
+  category?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -66,6 +73,9 @@ export interface IncomeInput {
   year: number;
   halfMonths?: HalfMonth[];
   halfMonth?: HalfMonth;
+  accountId?: number | null;
+  note?: string | null;
+  category?: string | null;
 }
 
 export type BudgetType = "monthly" | "yearly" | "bi-monthly";

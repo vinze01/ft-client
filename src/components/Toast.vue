@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <Teleport to="body">
     <transition-group
       name="toast"
@@ -8,21 +8,14 @@
       <div
         v-for="toast in toasts"
         :key="toast.id"
-        class="toast-item flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border backdrop-blur-sm min-w-[280px]"
-        :class="[
-          toast.type === 'success'
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-            : toast.type === 'error'
-              ? 'bg-red-50 border-red-200 text-red-800'
-              : toast.type === 'warning'
-                ? 'bg-amber-50 border-amber-200 text-amber-800'
-                : 'bg-blue-50 border-blue-200 text-blue-800',
-        ]"
+        class="toast-item flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg border min-w-[280px]"
+        :style="styleFor(toast.type)"
       >
         <div class="flex-shrink-0">
           <svg
             v-if="toast.type === 'success'"
-            class="w-5 h-5 text-emerald-500"
+            class="w-5 h-5"
+            :style="{ color: 'var(--income)' }"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -36,7 +29,8 @@
           </svg>
           <svg
             v-else-if="toast.type === 'error'"
-            class="w-5 h-5 text-red-500"
+            class="w-5 h-5"
+            :style="{ color: 'var(--expense)' }"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -50,7 +44,8 @@
           </svg>
           <svg
             v-else-if="toast.type === 'warning'"
-            class="w-5 h-5 text-amber-500"
+            class="w-5 h-5"
+            :style="{ color: 'var(--warning)' }"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -64,7 +59,8 @@
           </svg>
           <svg
             v-else
-            class="w-5 h-5 text-blue-500"
+            class="w-5 h-5"
+            :style="{ color: 'var(--accent-color)' }"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -117,6 +113,40 @@ export default defineComponent({
   setup() {
     const toasts = ref<Toast[]>([]);
 
+    const toastColors: Record<
+      Toast["type"],
+      { bg: string; border: string; text: string }
+    > = {
+      success: {
+        bg: "var(--income-soft)",
+        border: "var(--income)",
+        text: "var(--text-primary)",
+      },
+      error: {
+        bg: "var(--expense-soft)",
+        border: "var(--expense)",
+        text: "var(--text-primary)",
+      },
+      warning: {
+        bg: "var(--warning-soft)",
+        border: "var(--warning)",
+        text: "var(--text-primary)",
+      },
+      info: {
+        bg: "var(--accent-50)",
+        border: "var(--accent-color)",
+        text: "var(--text-primary)",
+      },
+    };
+    const styleFor = (type: Toast["type"]) => {
+      const c = toastColors[type];
+      return {
+        backgroundColor: c.bg,
+        borderColor: c.border,
+        color: c.text,
+      };
+    };
+
     const addToast = (
       message: string,
       type: Toast["type"] = "info",
@@ -135,7 +165,7 @@ export default defineComponent({
       if (idx > -1) toasts.value.splice(idx, 1);
     };
 
-    return { toasts, addToast, removeToast };
+    return { toasts, addToast, removeToast, styleFor };
   },
 });
 

@@ -1,44 +1,24 @@
 <template>
   <div class="animate-fade-in">
     <!-- Page Header -->
-    <div
-      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
-    >
-      <div>
-        <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-1">
-          Expenses
-        </h1>
-        <p class="text-gray-500 dark:text-gray-400">
-          Track and manage your daily expenses
-        </p>
-      </div>
-      <button @click="showModal()" class="btn btn-primary shadow-lg">
-        <svg
-          class="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          ></path>
-        </svg>
-        Add Expense
-      </button>
-    </div>
+    <PageHeader title="Expenses" subtitle="Track and manage your daily expenses">
+      <template #actions>
+        <button @click="showModal()" class="btn btn-primary">
+          <component :is="PlusIcon" class="w-4 h-4" />
+          Add Expense
+        </button>
+      </template>
+    </PageHeader>
 
     <!-- Filters -->
     <div class="card p-4 mb-6">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="relative">
           <div
             class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
           >
             <svg
-              class="w-5 h-5 text-gray-400 dark:text-gray-500"
+              class="w-5 h-5 text-ink-muted"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -96,12 +76,19 @@
           <tbody>
             <tr v-for="expense in expenses" :key="expense.id">
               <td>
-                <span class="font-medium text-gray-800 dark:text-white">{{
+                <span class="font-medium text-ink">{{
                   expense.description
                 }}</span>
+                <p
+                  v-if="expense.note"
+                  class="text-xs text-ink-muted truncate max-w-[200px]"
+                  :title="expense.note"
+                >
+                  {{ expense.note }}
+                </p>
               </td>
               <td>
-                <span class="font-bold text-rose-600"
+                <span class="font-semibold text-expense financial-amount"
                   >-₱{{ formatNumber(expense.amount) }}</span
                 >
               </td>
@@ -116,19 +103,19 @@
                   {{ expense.category }}
                 </span>
               </td>
-              <td class="text-gray-500 dark:text-gray-400">
+              <td class="text-ink-secondary">
                 {{ formatDate(expense.date) }}
               </td>
-              <td class="text-gray-500 dark:text-gray-400">
+              <td class="text-ink-secondary">
                 {{ expense.createdAt ? formatDate(expense.createdAt) : "-" }}
               </td>
-              <td class="text-gray-500 dark:text-gray-400">
+              <td class="text-ink-secondary">
                 {{ expense.updatedAt ? formatDate(expense.updatedAt) : "-" }}
               </td>
               <td>
                 <button
                   @click="editExpense(expense)"
-                  class="p-2 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+                  class="p-2 rounded-lg hover:bg-[var(--accent-50)] text-ink-muted hover:text-[var(--accent-color)] transition-all"
                 >
                   <svg
                     class="w-4 h-4"
@@ -146,7 +133,7 @@
                 </button>
                 <button
                   @click="confirmDelete(expense)"
-                  class="p-2 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/20 text-gray-400 dark:text-gray-500 hover:text-rose-600 dark:hover:text-rose-400 transition-all"
+                  class="p-2 rounded-lg hover:bg-[var(--expense-soft)] text-ink-muted hover:text-[var(--expense)] transition-all"
                 >
                   <svg
                     class="w-4 h-4"
@@ -168,23 +155,28 @@
         </table>
       </div>
     </div>
-  </div>
 
-  <!-- Mobile Card List -->
-  <div class="md:hidden space-y-3">
+    <!-- Mobile Card List -->
+    <div class="md:hidden space-y-3">
     <div v-for="expense in expenses" :key="expense.id" class="mobile-card">
       <div class="mobile-card-header">
-        <div>
-          <p class="font-medium text-gray-800 dark:text-white">
+        <div class="min-w-0">
+          <p class="font-medium text-ink truncate">
             {{ expense.description }}
           </p>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p class="text-sm text-ink-secondary mt-1">
             {{ formatDate(expense.date) }}
+          </p>
+          <p
+            v-if="expense.note"
+            class="text-xs text-ink-muted mt-1 truncate max-w-[200px]"
+          >
+            {{ expense.note }}
           </p>
           <div class="flex gap-2 mt-2">
             <button
               @click="editExpense(expense)"
-              class="p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400"
+              class="p-2 rounded-lg hover:bg-[var(--accent-50)] text-ink-muted hover:text-[var(--accent-color)]"
             >
               <svg
                 class="w-4 h-4"
@@ -202,7 +194,7 @@
             </button>
             <button
               @click="confirmDelete(expense)"
-              class="p-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-gray-400 dark:text-gray-500 hover:text-rose-600 dark:hover:text-rose-400"
+              class="p-2 rounded-lg hover:bg-[var(--expense-soft)] text-ink-muted hover:text-[var(--expense)]"
             >
               <svg
                 class="w-4 h-4"
@@ -223,57 +215,25 @@
       </div>
 
       <!-- Empty State -->
-      <div v-if="expenses.length === 0" class="empty-state py-12">
-        <div
-          class="w-16 h-16 bg-gradient-to-br from-rose-100 to-rose-200 rounded-2xl flex items-center justify-center mb-4"
-        >
-          <svg
-            class="w-8 h-8 text-rose-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.5"
-              d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-            ></path>
-          </svg>
-        </div>
-        <p class="empty-state-title">No expenses found</p>
-        <p class="empty-state-description">
-          Start tracking your expenses by adding one
-        </p>
-      </div>
+      <EmptyState
+        v-if="expenses.length === 0"
+        :icon="WalletIcon"
+        title="No expenses found"
+        description="Start tracking your expenses by adding one."
+        action-label="Add Expense"
+        @action="showModal()"
+      />
     </div>
 
     <!-- Desktop Empty State -->
-    <div
-      v-if="expenses.length === 0"
-      class="card hidden md:block empty-state py-16"
-    >
-      <div
-        class="w-20 h-20 bg-gradient-to-br from-rose-100 to-rose-200 rounded-2xl flex items-center justify-center mb-4"
-      >
-        <svg
-          class="w-10 h-10 text-rose-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.5"
-            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-          ></path>
-        </svg>
-      </div>
-      <p class="empty-state-title">No expenses found</p>
-      <p class="empty-state-description">
-        Start tracking your expenses by adding one
-      </p>
+    <div v-if="expenses.length === 0" class="card hidden md:block">
+      <EmptyState
+        :icon="WalletIcon"
+        title="No expenses found"
+        description="Start tracking your expenses by adding one."
+        action-label="Add Expense"
+        @action="showModal()"
+      />
     </div>
 
     <!-- Modal -->
@@ -284,7 +244,7 @@
           <div class="modal-header">
             <div class="flex items-center gap-4 w-full">
               <div
-                class="modal-icon bg-gradient-to-br from-rose-400 to-rose-600 text-white"
+                class="modal-icon bg-expense-light text-expense"
               >
                 <svg
                   v-if="!editingId"
@@ -316,10 +276,10 @@
                 </svg>
               </div>
               <div class="flex-1">
-                <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+                <h3 class="text-lg font-semibold" style="color: var(--text-primary)">
                   {{ editingId ? "Edit Expense" : "Add New Expense" }}
                 </h3>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
+                <p class="text-sm text-ink-secondary">
                   {{
                     editingId
                       ? "Update the expense details below"
@@ -329,7 +289,7 @@
               </div>
               <button
                 @click="closeModal"
-                class="ml-auto flex-shrink-0 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500"
+                class="ml-auto flex-shrink-0 p-2 rounded-xl hover:bg-[var(--surface-elevated)] transition-colors text-ink-muted"
               >
                 <svg
                   class="w-5 h-5"
@@ -410,7 +370,7 @@
                   class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none"
                 >
                   <svg
-                    class="w-5 h-5 text-gray-400 dark:text-gray-500"
+                    class="w-5 h-5 text-ink-muted"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -425,6 +385,29 @@
                 </div>
               </div>
             </div>
+
+            <div>
+              <label class="label">Account (Optional)</label>
+              <select
+                v-model="form.accountId"
+                class="input appearance-none cursor-pointer"
+              >
+                <option :value="null">No account</option>
+                <option v-for="acc in accounts" :key="acc.id" :value="acc.id">
+                  {{ acc.name }}
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label class="label">Note (Optional)</label>
+              <textarea
+                v-model="form.note"
+                class="input"
+                rows="2"
+                placeholder="e.g. paid with GCash"
+              ></textarea>
+            </div>
           </form>
 
           <!-- Modal Footer -->
@@ -435,7 +418,7 @@
             <button
               @click="handleSubmit"
               :disabled="submitting"
-              class="btn btn-primary shadow-lg shadow-indigo-500/30"
+              class="btn btn-primary"
             >
               <svg
                 v-if="submitting"
@@ -465,6 +448,7 @@
         </div>
       </div>
     </Teleport>
+    </div>
   </div>
 </template>
 
@@ -475,6 +459,9 @@ import { confirm } from "../components/ConfirmModal.vue";
 import dayjs from "dayjs";
 import axios from "axios";
 import type { Expense, ExpenseInput } from "../types";
+import PageHeader from "../components/PageHeader.vue";
+import EmptyState from "../components/EmptyState.vue";
+import { PlusIcon, WalletIcon } from "../components/icons";
 
 const API_URL = "http://localhost:3001/api";
 
@@ -493,6 +480,7 @@ const CATEGORIES = [
 
 export default defineComponent({
   name: "ExpensesView",
+  components: { PageHeader, EmptyState },
   setup() {
     const loading = ref(false);
     const submitting = ref(false);
@@ -513,7 +501,24 @@ export default defineComponent({
       amount: 0,
       category: "",
       date: "",
+      accountId: null,
+      note: "",
     });
+
+    const accounts = ref<{ id: number; name: string }[]>([]);
+
+    const fetchAccounts = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get<{ id: number; name: string }[]>(
+          `${API_URL}/accounts`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        accounts.value = response.data;
+      } catch {
+        // Account linking is optional; leave the dropdown empty on failure.
+      }
+    };
 
     const categoryOptions = computed(() =>
       categories.value.map((c) => ({ value: c, label: c })),
@@ -533,7 +538,7 @@ export default defineComponent({
     const getCategoryColor = (category: string): string => {
       const colors: Record<string, string> = {
         Food: "#10b981",
-        Transportation: "#6366f1",
+        Transportation: "#0ea5e9",
         Housing: "#f59e0b",
         Utilities: "#8b5cf6",
         Healthcare: "#ec4899",
@@ -543,7 +548,7 @@ export default defineComponent({
         Personal: "#14b8a6",
         Other: "#64748b",
       };
-      return colors[category] || "#6366f1";
+      return colors[category] || "#64748b";
     };
 
     const fetchExpenses = async () => {
@@ -580,6 +585,8 @@ export default defineComponent({
         amount: 0,
         category: "",
         date: "",
+        accountId: null,
+        note: "",
       });
       modalVisible.value = true;
     };
@@ -591,6 +598,8 @@ export default defineComponent({
         amount: expense.amount,
         category: expense.category,
         date: expense.date,
+        accountId: expense.accountId ?? null,
+        note: expense.note || "",
       });
       modalVisible.value = true;
     };
@@ -656,6 +665,7 @@ export default defineComponent({
 
     onMounted(() => {
       fetchExpenses();
+      fetchAccounts();
     });
 
     return {
@@ -665,6 +675,7 @@ export default defineComponent({
       editingId,
       expenses,
       categories,
+      accounts,
       filters,
       form,
       categoryOptions,
@@ -678,6 +689,8 @@ export default defineComponent({
       closeModal,
       handleSubmit,
       confirmDelete,
+      PlusIcon,
+      WalletIcon,
     };
   },
 });
