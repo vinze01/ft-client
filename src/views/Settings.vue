@@ -1,19 +1,12 @@
 <template>
   <div class="animate-fade-in max-w-4xl mx-auto">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-1">
-        Settings
-      </h1>
-      <p class="text-gray-500 dark:text-gray-400">
-        Manage your account and preferences
-      </p>
-    </div>
+    <PageHeader title="Settings" subtitle="Manage your account and preferences" />
 
     <div class="space-y-6">
       <!-- Profile Section -->
       <div class="card p-6">
         <h2
-          class="text-lg font-semibold text-gray-800 dark:text-white mb-6 flex items-center gap-2"
+          class="text-lg font-semibold text-ink mb-6 flex items-center gap-2"
         >
           <svg
             class="w-5 h-5"
@@ -37,7 +30,8 @@
           <div class="flex flex-col items-center">
             <div class="relative">
               <div
-                class="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold"
+                class="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center text-2xl font-semibold"
+                :style="{ backgroundColor: 'var(--accent-100)', color: 'var(--accent-color)' }"
               >
                 <img
                   v-if="form.avatar"
@@ -80,7 +74,7 @@
                 @change="handleAvatarChange"
               />
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p class="text-xs text-ink-secondary mt-2">
               Click to change photo
             </p>
           </div>
@@ -144,7 +138,7 @@
       <!-- Theme Color Section -->
       <div class="card p-6">
         <h2
-          class="text-lg font-semibold text-gray-800 dark:text-white mb-2 flex items-center gap-2"
+          class="text-lg font-semibold text-ink mb-2 flex items-center gap-2"
         >
           <svg
             class="w-5 h-5"
@@ -161,7 +155,7 @@
           </svg>
           Theme Color
         </h2>
-        <p class="text-gray-500 dark:text-gray-400 mb-6">
+        <p class="text-ink-secondary mb-6">
           Choose an accent color for buttons, links, and highlights.
         </p>
 
@@ -172,10 +166,10 @@
             :style="{ backgroundColor: themeStore.accentColor }"
           ></div>
           <div>
-            <p class="font-medium text-gray-800 dark:text-white">
+            <p class="font-medium text-ink">
               Current Accent
             </p>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
+            <p class="text-sm text-ink-secondary">
               {{ themeStore.accentColor }}
             </p>
           </div>
@@ -216,7 +210,7 @@
               v-model="customColor"
               @blur="selectColor(customColor)"
               class="input w-32 uppercase"
-              placeholder="#6366f1"
+              placeholder="#059669"
             />
           </div>
         </div>
@@ -232,10 +226,11 @@
       <!-- Change Password Section -->
       <div class="card p-6">
         <h2
-          class="text-lg font-semibold text-gray-800 dark:text-white mb-6 flex items-center gap-2"
+          class="text-lg font-semibold text-ink mb-6 flex items-center gap-2"
         >
           <svg
-            class="w-5 h-5 text-indigo-600"
+            class="w-5 h-5"
+            style="color: var(--accent-color)"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -314,7 +309,7 @@
       <!-- Data Export & Import Section -->
       <div class="card p-6">
         <h2
-          class="text-lg font-semibold text-gray-800 dark:text-white mb-6 flex items-center gap-2"
+          class="text-lg font-semibold text-ink mb-6 flex items-center gap-2"
         >
           <svg
             class="w-5 h-5"
@@ -376,14 +371,14 @@
           </div>
           <div
             v-if="importResult"
-            class="mt-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 text-sm"
+            class="mt-3 p-4 rounded-xl bg-surface-elevated text-sm"
           >
-            <p class="text-gray-800 dark:text-white">
+            <p class="text-ink">
               Imported {{ importResult.imported }} record(s)
             </p>
             <ul
               v-if="importResult.errors.length > 0"
-              class="text-red-500 mt-1 list-disc list-inside"
+              class="text-expense mt-1 list-disc list-inside"
             >
               <li v-for="(err, i) in importResult.errors" :key="i">{{ err }}</li>
             </ul>
@@ -394,7 +389,7 @@
       <!-- Security Section -->
       <div class="card p-6">
         <h2
-          class="text-lg font-semibold text-gray-800 dark:text-white mb-6 flex items-center gap-2"
+          class="text-lg font-semibold text-ink mb-6 flex items-center gap-2"
         >
           <svg
             class="w-5 h-5"
@@ -413,30 +408,42 @@
         </h2>
 
         <div class="mb-6">
-          <h3 class="font-medium text-gray-800 dark:text-white mb-2">
+          <h3 class="font-medium text-ink mb-2">
             Two-Factor Authentication
           </h3>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+          <p class="text-sm text-ink-secondary mb-3">
             Protect your account with an authenticator app.
           </p>
-          <div v-if="!twofa.showSetup" class="flex flex-col sm:flex-row gap-3">
-            <button @click="enable2FA" class="btn btn-secondary">
-              Set Up 2FA
-            </button>
-            <button @click="disable2FA" class="btn btn-ghost">
-              Disable 2FA
-            </button>
+          <div v-if="!twofa.showSetup" class="space-y-3">
+            <div class="flex flex-col sm:flex-row gap-3">
+              <button @click="enable2FA" class="btn btn-secondary">
+                Set Up 2FA
+              </button>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 items-start">
+              <input
+                v-model="twofa.disablePassword"
+                type="password"
+                class="input flex-1"
+                placeholder="Confirm your password to disable 2FA"
+                autocomplete="current-password"
+              />
+              <button @click="disable2FA" class="btn btn-ghost">
+                Disable 2FA
+              </button>
+            </div>
           </div>
           <div v-else class="space-y-3">
             <img
               v-if="twofa.qrCode"
               :src="twofa.qrCode"
               alt="2FA QR code"
-              class="w-48 h-48 rounded-xl border border-gray-200 dark:border-gray-700"
+              class="w-48 h-48 rounded-xl border"
+              style="border-color: var(--border)"
             />
             <p
               v-if="twofa.secret"
-              class="text-xs font-mono text-gray-500 dark:text-gray-400 break-all"
+              class="text-xs font-mono text-ink-secondary break-all"
             >
               {{ twofa.secret }}
             </p>
@@ -458,33 +465,34 @@
 
         <div>
           <div class="flex items-center justify-between mb-2">
-            <h3 class="font-medium text-gray-800 dark:text-white">
+            <h3 class="font-medium text-ink">
               Sessions & Devices
             </h3>
             <button
               v-if="otherSessions.length > 0"
               @click="revokeOtherSessions"
-              class="btn btn-ghost text-red-500 text-sm"
+              class="btn btn-ghost text-sm"
+              style="color: var(--expense)"
             >
               Revoke Others
             </button>
           </div>
           <div
             v-if="!currentSession && otherSessions.length === 0"
-            class="text-sm text-gray-500 dark:text-gray-400"
+            class="text-sm text-ink-secondary"
           >
             No active sessions recorded.
           </div>
           <div v-else class="space-y-2">
             <div
               v-if="currentSession"
-              class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50"
+              class="flex items-center justify-between p-3 rounded-xl bg-surface-elevated"
             >
               <div>
-                <p class="text-sm font-medium text-gray-800 dark:text-white">
+                <p class="text-sm font-medium text-ink">
                   {{ currentSession.deviceInfo || 'Current session' }}
                 </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
+                <p class="text-xs text-ink-secondary">
                   {{ currentSession.ipAddress || '' }}
                 </p>
               </div>
@@ -493,19 +501,20 @@
             <div
               v-for="session in otherSessions"
               :key="session.id"
-              class="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50"
+              class="flex items-center justify-between p-3 rounded-xl bg-surface-elevated"
             >
               <div>
-                <p class="text-sm font-medium text-gray-800 dark:text-white">
+                <p class="text-sm font-medium text-ink">
                   {{ session.deviceInfo || 'Unknown device' }}
                 </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
+                <p class="text-xs text-ink-secondary">
                   {{ session.ipAddress || '' }}
                 </p>
               </div>
               <button
                 @click="revokeSession(session.id)"
-                class="btn btn-ghost text-red-500 text-sm"
+                class="btn btn-ghost text-sm"
+                style="color: var(--expense)"
               >
                 Revoke
               </button>
@@ -514,10 +523,51 @@
         </div>
       </div>
 
-      <!-- Delete Account Section -->
-      <div class="card p-6 border-red-200">
+      <!-- Notification Preferences Section -->
+      <div class="card p-6">
         <h2
-          class="text-lg font-semibold text-red-600 mb-4 flex items-center gap-2"
+          class="text-lg font-semibold text-ink mb-4 flex items-center gap-2"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a3 3 0 10-6 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+            ></path>
+          </svg>
+          Notification Preferences
+        </h2>
+        <div v-if="notifLoading" class="text-sm text-ink-secondary">
+          Loading preferences…
+        </div>
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label
+            v-for="opt in notifOptions"
+            :key="opt.key"
+            class="flex items-center justify-between p-3 rounded-xl bg-surface-elevated cursor-pointer"
+          >
+            <span class="text-sm text-ink-secondary">{{ opt.label }}</span>
+            <input
+              v-model="notifSettings[opt.key]"
+              type="checkbox"
+              class="w-4 h-4"
+              @change="saveNotificationSettings"
+            />
+          </label>
+        </div>
+      </div>
+
+      <!-- Delete Account Section -->
+      <div class="card p-6" style="border-color: var(--expense-soft)">
+        <h2
+          class="text-lg font-semibold mb-4 flex items-center gap-2"
+          style="color: var(--expense)"
         >
           <svg
             class="w-5 h-5"
@@ -534,13 +584,13 @@
           </svg>
           Danger Zone
         </h2>
-        <p class="text-gray-600 dark:text-gray-400 mb-4">
+        <p class="text-ink-secondary mb-4">
           Once you delete your account, there is no going back. Please be
           certain.
         </p>
         <button
           @click="confirmDeleteAccount"
-          class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+          class="btn btn-danger"
         >
           Delete Account
         </button>
@@ -555,12 +605,14 @@ import { useAuthStore } from "../stores/authStore";
 import { useThemeStore } from "../stores/themeStore";
 import { toast } from "../components/Toast.vue";
 import { confirm } from "../components/ConfirmModal.vue";
+import PageHeader from "../components/PageHeader.vue";
 import axios from "axios";
 
 const API_URL = "http://localhost:3001/api";
 
 export default defineComponent({
   name: "SettingsView",
+  components: { PageHeader },
   setup() {
     const authStore = useAuthStore();
     const themeStore = useThemeStore();
@@ -582,7 +634,8 @@ export default defineComponent({
       showSetup: false,
       qrCode: '',
       secret: '',
-      code: ''
+      code: '',
+      disablePassword: ''
     });
 
     const form = reactive({
@@ -617,6 +670,7 @@ export default defineComponent({
         form.avatar = authStore.user.avatar || null;
       }
       fetchDevices();
+      fetchNotificationSettings();
     });
 
     const triggerAvatarUpload = () => {
@@ -899,6 +953,10 @@ export default defineComponent({
     };
 
     const disable2FA = async () => {
+      if (!twofa.disablePassword) {
+        toast.warning("Enter your password to disable 2FA");
+        return;
+      }
       const ok = await confirm({
         title: "Disable 2FA",
         content: "Are you sure you want to disable two-factor authentication?",
@@ -908,12 +966,13 @@ export default defineComponent({
       try {
         await axios.post(
           `${API_URL}/security/2fa/disable`,
-          {},
+          { password: twofa.disablePassword },
           { headers: authHeaders() },
         );
+        twofa.disablePassword = "";
         toast.success("Two-factor authentication disabled");
-      } catch (error) {
-        toast.error("Failed to disable 2FA");
+      } catch (error: any) {
+        toast.error(error.response?.data?.error || "Failed to disable 2FA");
       }
     };
 
@@ -966,6 +1025,70 @@ export default defineComponent({
       }
     };
 
+    const notifLoading = ref(false);
+    const notifSettings = reactive({
+      budgetAlerts: true,
+      billReminders: true,
+      goalUpdates: true,
+      weeklySummary: true,
+      insights: true,
+      securityAlerts: true,
+      emailNotifications: true,
+      pushNotifications: true,
+    });
+    const notifOptions = [
+      { key: "budgetAlerts", label: "Budget alerts" },
+      { key: "billReminders", label: "Bill reminders" },
+      { key: "goalUpdates", label: "Goal updates" },
+      { key: "weeklySummary", label: "Weekly summary" },
+      { key: "insights", label: "Insights" },
+      { key: "securityAlerts", label: "Security alerts" },
+      { key: "emailNotifications", label: "Email notifications" },
+      { key: "pushNotifications", label: "Push notifications" },
+    ] as const;
+
+    const fetchNotificationSettings = async () => {
+      notifLoading.value = true;
+      try {
+        const response = await axios.get(`${API_URL}/notifications/settings`, {
+          headers: authHeaders(),
+        });
+        const data = response.data?.data;
+        if (data) {
+          Object.assign(notifSettings, {
+            budgetAlerts: data.budgetAlerts,
+            billReminders: data.billReminders,
+            goalUpdates: data.goalUpdates,
+            weeklySummary: data.weeklySummary,
+            insights: data.insights,
+            securityAlerts: data.securityAlerts,
+            emailNotifications: data.emailNotifications,
+            pushNotifications: data.pushNotifications,
+          });
+        }
+      } catch (error) {
+        toast.error("Failed to load notification settings");
+      } finally {
+        notifLoading.value = false;
+      }
+    };
+
+    const saveNotificationSettings = async () => {
+      try {
+        await axios.put(
+          `${API_URL}/notifications/settings`,
+          { ...notifSettings },
+          { headers: authHeaders() },
+        );
+        toast.success("Notification preferences saved");
+      } catch (error: any) {
+        toast.error(
+          error.response?.data?.error ||
+            "Failed to save notification settings",
+        );
+      }
+    };
+
     return {
       avatarInput,
       savingProfile,
@@ -997,6 +1120,10 @@ export default defineComponent({
       otherSessions,
       revokeSession,
       revokeOtherSessions,
+      notifLoading,
+      notifSettings,
+      notifOptions,
+      saveNotificationSettings,
     };
   },
 });

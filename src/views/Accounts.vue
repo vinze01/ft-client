@@ -1,32 +1,28 @@
 <template>
   <div class="animate-fade-in">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-1">
-          Accounts
-        </h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">
-          Manage your financial accounts
-        </p>
-      </div>
-      <button @click="showAddModal = true" class="btn btn-primary">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-        </svg>
-        Add Account
-      </button>
-    </div>
+    <PageHeader title="Accounts" subtitle="Manage your financial accounts">
+      <template #actions>
+        <button @click="showTransferModal = true" class="btn btn-secondary">
+          <component :is="TransferIcon" class="w-4 h-4" />
+          Transfer
+        </button>
+        <button @click="showAddModal = true" class="btn btn-primary">
+          <component :is="PlusIcon" class="w-4 h-4" />
+          Add Account
+        </button>
+      </template>
+    </PageHeader>
 
-    <div v-if="summary" class="card p-4 mb-6">
+    <div v-if="summary" class="card p-5 mb-6">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Total Balance</p>
-          <p class="text-2xl font-bold text-gray-800 dark:text-white">
+          <p class="card-title">Total Balance</p>
+          <p class="text-2xl font-semibold financial-amount mt-0.5" style="color: var(--text-primary)">
             {{ formatCurrency(summary.totalBalance) }}
           </p>
         </div>
         <div class="text-right">
-          <p class="text-sm text-gray-500 dark:text-gray-400">{{ accounts.length }} accounts</p>
+          <p class="card-title">{{ accounts.length }} accounts</p>
         </div>
       </div>
     </div>
@@ -42,56 +38,53 @@
             class="w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl font-bold"
             :style="{ backgroundColor: account.color || themeStore.accentColor }"
           >
-            {{ account.name.charAt(0).toUpperCase() }}
+            {{ account.icon || account.name.charAt(0).toUpperCase() }}
           </div>
           <div class="flex gap-1">
-            <button @click="editAccount(account)" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button @click="editAccount(account)" class="p-1.5 rounded-lg hover:bg-[var(--accent-50)] hover:text-[var(--accent-color)]" style="color: var(--text-muted)" title="Edit account" aria-label="Edit account">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a3.5 3.5 0 11-4.95 4.95l-4.95 4.95a3.5 3.5 0 014.95 4.95l5.657 5.657a3.5 3.5 0 01-4.95 4.95l-5.657-5.657a3.5 3.5 0 00-4.95 0"></path>
               </svg>
             </button>
-            <button @click="deleteAccount(account.id)" class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button @click="deleteAccount(account.id)" class="p-1.5 rounded-lg hover:bg-[var(--expense-soft)] hover:text-[var(--expense)]" style="color: var(--text-muted)" title="Delete account" aria-label="Delete account">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1H6a1 1 0 00-1 1v3M4 7h16"></path>
               </svg>
             </button>
           </div>
         </div>
-        <h3 class="font-semibold text-gray-800 dark:text-white mb-1">{{ account.name }}</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3 capitalize">{{ account.type.replace('_', ' ') }}</p>
-        <p class="text-xl font-bold" :class="account.balance >= 0 ? 'text-green-600' : 'text-red-600'">
+        <h3 class="font-semibold mb-1" style="color: var(--text-primary)">{{ account.name }}</h3>
+        <p class="text-sm mb-3 capitalize" style="color: var(--text-secondary)">{{ account.type.replace('_', ' ') }}</p>
+        <p class="text-xl font-semibold financial-amount" :style="{ color: account.balance >= 0 ? 'var(--income)' : 'var(--expense)' }">
           {{ formatCurrency(account.balance) }}
         </p>
-        <p v-if="account.isDefault" class="text-xs text-brand-500 mt-2">Default</p>
+        <p v-if="account.isDefault" class="text-xs font-medium mt-2" style="color: var(--accent-color)">Default</p>
       </div>
     </div>
 
-    <div v-if="accounts.length === 0" class="empty-state">
-      <div class="empty-state-icon">
-        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-        </svg>
-      </div>
-      <h3 class="empty-state-title">No accounts yet</h3>
-      <p class="empty-state-description">Add your first account to start tracking your finances</p>
-      <button @click="showAddModal = true" class="btn btn-primary mt-4">
-        Add Account
-      </button>
-    </div>
+    <EmptyState
+      v-if="accounts.length === 0"
+      :icon="CreditCardIcon"
+      title="No accounts yet"
+      description="Add your first account to start tracking your finances."
+      action-label="Add Account"
+      @action="showAddModal = true"
+    />
 
-    <div v-if="showAddModal || showTransferModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="closeModals">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md animate-fade-in">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-gray-800 dark:text-white">
+    <div v-if="showAddModal || showTransferModal" class="modal-overlay" @click.self="closeModals">
+      <div class="modal-content animate-scale-in" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <h3 class="section-title">
             {{ showEditModal ? 'Edit' : showTransferModal ? 'Transfer' : 'Add' }} Account
           </h3>
-          <button @click="closeModals" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button @click="closeModals" class="p-1.5 rounded-lg hover:bg-[var(--surface-elevated)]" style="color: var(--text-muted)" aria-label="Close">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
 
+        <div class="modal-body">
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div v-if="!showTransferModal">
             <label class="label">Account Name</label>
@@ -114,6 +107,25 @@
             <input v-model.number="form.balance" type="number" step="0.01" class="input" placeholder="0.00" />
           </div>
 
+          <div v-if="!showTransferModal" class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="label">Color</label>
+              <div class="flex items-center gap-2">
+                <input v-model="form.color" type="color" class="w-10 h-10 rounded-lg cursor-pointer bg-transparent" />
+                <input v-model="form.color" type="text" class="input" placeholder="#059669" pattern="^#[0-9A-Fa-f]{6}$" />
+              </div>
+            </div>
+            <div>
+              <label class="label">Icon (Emoji)</label>
+              <input v-model="form.icon" type="text" maxlength="4" class="input" placeholder="🏦" />
+            </div>
+          </div>
+
+          <div v-if="showEditModal && !showTransferModal" class="flex items-center gap-2">
+            <input v-model="form.isDefault" type="checkbox" id="isDefault" class="w-4 h-4" />
+            <label for="isDefault" class="text-sm text-ink-secondary">Set as default account</label>
+          </div>
+
           <div v-if="showTransferModal">
             <label class="label">From Account</label>
             <select v-model="form.fromAccountId" class="input" required>
@@ -134,27 +146,38 @@
           </div>
 
           <div v-if="showTransferModal">
+            <label class="label">Fee (Optional)</label>
+            <input v-model.number="form.fee" type="number" step="0.01" min="0" class="input" placeholder="0.00" />
+          </div>
+
+          <div v-if="showTransferModal">
             <label class="label">Note (Optional)</label>
             <input v-model="form.note" type="text" class="input" placeholder="Transfer note" />
           </div>
 
-          <div class="flex gap-3">
+          <div class="flex gap-3 pt-2">
             <button type="button" @click="closeModals" class="btn btn-secondary flex-1">Cancel</button>
             <button type="submit" class="btn btn-primary flex-1">{{ showTransferModal ? 'Transfer' : (showEditModal ? 'Update' : 'Create') }}</button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, onMounted } from 'vue';
+import { defineComponent, reactive, ref, onMounted } from 'vue';
 import { useAccountStore } from '../stores/accountStore';
 import { useThemeStore } from '../stores/themeStore';
+import { toast } from '../components/Toast.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EmptyState from '../components/EmptyState.vue';
+import { PlusIcon, CreditCardIcon, TransferIcon } from '../components/icons';
 
 export default defineComponent({
   name: 'AccountsView',
+  components: { PageHeader, EmptyState },
   setup() {
     const accountStore = useAccountStore();
     const themeStore = useThemeStore();
@@ -164,15 +187,19 @@ export default defineComponent({
       name: '',
       type: 'bank' as string,
       balance: 0,
+      color: '',
+      icon: '',
+      isDefault: false,
       fromAccountId: null as number | null,
       toAccountId: null as number | null,
       amount: 0,
+      fee: 0,
       note: ''
     });
 
-    const showAddModal = false;
-    const showEditModal = false;
-    const showTransferModal = false;
+    const showAddModal = ref(false);
+    const showEditModal = ref(false);
+    const showTransferModal = ref(false);
 
     const formatCurrency = (amount: number) => {
       return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
@@ -183,6 +210,10 @@ export default defineComponent({
       form.name = account.name;
       form.type = account.type;
       form.balance = account.balance;
+      form.color = account.color || '';
+      form.icon = account.icon || '';
+      form.isDefault = account.isDefault;
+      showEditModal.value = true;
     };
 
     const deleteAccount = async (id: number) => {
@@ -192,21 +223,59 @@ export default defineComponent({
     };
 
     const handleSubmit = async () => {
-      if (showEditModal && form.id) {
-        await accountStore.updateAccount(form.id, form);
-      } else if (showTransferModal) {
-        await accountStore.transfer({
-          fromAccountId: form.fromAccountId!,
-          toAccountId: form.toAccountId!,
-          amount: form.amount,
-          note: form.note
-        });
-      } else {
-        await accountStore.createAccount(form);
+      try {
+        if (showEditModal.value && form.id) {
+          await accountStore.updateAccount(form.id, {
+            name: form.name,
+            type: form.type,
+            balance: form.balance,
+            color: form.color || undefined,
+            icon: form.icon || undefined,
+            isDefault: form.isDefault
+          });
+          toast.success('Account updated');
+        } else if (showTransferModal.value) {
+          await accountStore.transfer({
+            fromAccountId: form.fromAccountId!,
+            toAccountId: form.toAccountId!,
+            amount: form.amount,
+            fee: form.fee,
+            note: form.note
+          });
+          toast.success('Transfer completed');
+        } else {
+          await accountStore.createAccount({
+            name: form.name,
+            type: form.type,
+            balance: form.balance,
+            color: form.color || undefined,
+            icon: form.icon || undefined
+          });
+          toast.success('Account created');
+        }
+        closeModals();
+      } catch (e: any) {
+        toast.error(e.response?.data?.error || 'Failed to save account');
       }
     };
 
-    const closeModals = () => {};
+    const closeModals = () => {
+      showAddModal.value = false;
+      showEditModal.value = false;
+      showTransferModal.value = false;
+      form.id = null;
+      form.name = '';
+      form.type = 'bank';
+      form.balance = 0;
+      form.color = '';
+      form.icon = '';
+      form.isDefault = false;
+      form.fromAccountId = null;
+      form.toAccountId = null;
+      form.amount = 0;
+      form.fee = 0;
+      form.note = '';
+    };
 
     onMounted(async () => {
       await accountStore.fetchAccounts();
@@ -225,7 +294,10 @@ export default defineComponent({
       editAccount,
       deleteAccount,
       handleSubmit,
-      closeModals
+      closeModals,
+      PlusIcon,
+      CreditCardIcon,
+      TransferIcon
     };
   }
 });

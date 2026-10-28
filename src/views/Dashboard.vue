@@ -1,351 +1,181 @@
 <template>
-  <div class="animate-fade-in">
-    <!-- Page Header with View Switcher -->
-    <div
-      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6"
+  <div>
+    <PageHeader
+      title="Dashboard"
+      :subtitle="`Here's an overview of your finances, ${firstName}.`"
     >
-      <div>
-        <h1
-          class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-1"
-        >
-          Dashboard
-        </h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">
-          Welcome back, {{ fullName }}!
-        </p>
-      </div>
+      <template #actions>
+        <router-link to="/expenses" class="btn btn-primary btn-sm">
+          <component :is="PlusIcon" class="w-4 h-4" />
+          Add Transaction
+        </router-link>
+      </template>
+    </PageHeader>
 
-      <!-- View Type Switcher -->
-      <div
-        class="flex bg-white dark:bg-gray-800 rounded-xl p-1 shadow-sm border border-gray-200 dark:border-gray-700 overflow-x-auto"
+    <!-- Period selection -->
+    <div class="mb-6">
+      <PeriodSelector
+        v-model:view="currentView"
+        :period-label="periodLabel"
+        :half-month="selectedHalfMonth"
+        @update:half-month="onHalfMonthChange"
+        @prev="prevPeriod"
+        @next="nextPeriod"
+      />
+    </div>
+
+    <!-- Summary cards -->
+    <div v-if="loading" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div v-for="i in 4" :key="i" class="stat-card">
+        <div class="skeleton h-4 w-20 mb-4"></div>
+        <div class="skeleton h-8 w-28"></div>
+      </div>
+    </div>
+    <div v-else class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <StatCard
+        label="Income"
+        :value="`₱${formatNumber(summary.totalIncome)}`"
+        :icon="ArrowUpIcon"
+        tone="income"
+      />
+      <StatCard
+        label="Expenses"
+        :value="`₱${formatNumber(summary.totalExpenses)}`"
+        :icon="ArrowDownIcon"
+        tone="expense"
+      />
+      <StatCard
+        label="Balance"
+        :value="`₱${formatNumber(summary.balance)}`"
+        :icon="WalletIcon"
+        :value-color="balanceColor"
+      />
+      <StatCard
+        label="Budget Used"
+        :value="`${budgetUsedPercent}%`"
+        :icon="ChartBarIcon"
+        :tone="budgetUsedPercent > 90 ? 'expense' : budgetUsedPercent > 70 ? 'warning' : 'accent'"
       >
-        <button
-          v-for="v in viewTypes"
-          :key="v.value"
-          @click="currentView = v.value"
-          class="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap"
-          :class="
-            currentView === v.value
-              ? 'text-white'
-              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-          "
-          :style="
-            currentView === v.value
-              ? { backgroundColor: 'var(--accent-color)' }
-              : {}
-          "
-        >
-          {{ v.label }}
-        </button>
-      </div>
+        <div v-if="totalBudgeted > 0" class="mt-3">
+          <ProgressBar :value="budgetUsedPercent" :label="'Budget used'" />
+          <p class="text-xs mt-2" style="color: var(--text-secondary)">
+            of ₱{{ formatNumber(totalBudgeted) }} budget
+          </p>
+        </div>
+        <p v-else class="text-xs mt-2" style="color: var(--text-muted)">
+          No budget configured
+        </p>
+      </StatCard>
     </div>
 
-    <!-- Period Selector -->
-    <div class="card p-3 sm:p-4 mb-4 sm:mb-6">
-      <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
-        <button
-          @click="prevPeriod"
-          class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-        >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 19l-7-7 7-7"
-            ></path>
-          </svg>
-        </button>
-
+    <!-- Charts row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <!-- Financial overview chart -->
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="section-title">{{ chartTitle }}</h3>
+          <div class="flex items-center gap-4 text-xs" style="color: var(--text-secondary)">
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-sm" :style="{ backgroundColor: chartIncomeColor }"></span>
+              Income
+            </span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-sm" :style="{ backgroundColor: chartExpenseColor }"></span>
+              Expenses
+            </span>
+          </div>
+        </div>
         <div
-          v-if="currentView === 'bi-monthly'"
-          class="flex items-center gap-2"
+          v-if="!loading && !hasChartData"
+          class="h-48 flex items-center justify-center"
         >
-          <select
-            v-model="selectedHalfMonth"
-            @change="fetchDashboard"
-            class="input w-auto text-sm py-2"
-          >
-            <option :value="1">1st Half</option>
-            <option :value="2">2nd Half</option>
-          </select>
+          <EmptyState
+            :icon="ReceiptIcon"
+            title="No data for this period"
+            description="Add income or expenses to see your overview chart."
+            action-label="Add Transaction"
+            @action="$router.push('/expenses')"
+          />
         </div>
-
-        <span
-          class="text-base sm:text-lg font-semibold text-gray-800 dark:text-white flex-1 text-center"
-        >
-          {{ periodLabel }}
-        </span>
-
-        <button
-          @click="nextPeriod"
-          class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-        >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 5l7 7-7 7"
-            ></path>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- Summary Cards - Stack on mobile -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6">
-      <!-- Income Card -->
-      <div class="stat-card card-hover">
-        <div class="flex items-start justify-between mb-4">
-          <div class="stat-icon bg-income-light text-income">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M5 10l7-7m0 0l7 7m-7-7v18"
-              ></path>
-            </svg>
-          </div>
-        </div>
-        <p
-          class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-        >
-          {{ viewLabel }} Income
-        </p>
-        <p class="text-2xl font-bold text-gray-800 dark:text-white mt-1">
-          ₱{{ formatNumber(summary.totalIncome) }}
-        </p>
+        <div
+          v-show="loading || hasChartData"
+          ref="chartRef"
+          class="h-48 sm:h-56 w-full"
+          role="img"
+          :aria-label="`${chartTitle} bar chart comparing income and expenses`"
+        ></div>
       </div>
 
-      <!-- Expenses Card -->
-      <div class="stat-card card-hover">
-        <div class="flex items-start justify-between mb-4">
-          <div class="stat-icon bg-expense-light text-expense">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 14l-7 7m0 0l-7-7m7 7V3"
-              ></path>
-            </svg>
-          </div>
+      <!-- Expenses by category -->
+      <div class="card p-5">
+        <h3 class="section-title mb-4">Expenses by Category</h3>
+        <div v-if="!loading && Object.keys(summary.expensesByCategory).length === 0">
+          <EmptyState
+            :icon="ReceiptIcon"
+            title="No expenses yet"
+            description="Start adding expenses to see your spending breakdown."
+          />
         </div>
-        <p
-          class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-        >
-          {{ viewLabel }} Expenses
-        </p>
-        <p class="text-2xl font-bold text-gray-800 dark:text-white mt-1">
-          ₱{{ formatNumber(summary.totalExpenses) }}
-        </p>
-      </div>
-
-      <!-- Balance Card -->
-      <div class="stat-card card-hover">
-        <div class="flex items-start justify-between mb-4">
-          <div class="stat-icon bg-brand-100 text-brand-600">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-              ></path>
-            </svg>
-          </div>
-        </div>
-        <p
-          class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-        >
-          Balance
-        </p>
-        <p
-          :class="
-            summary.balance >= 0
-              ? 'text-green-600 dark:text-green-400'
-              : 'text-red-600 dark:text-red-400'
-          "
-          class="text-2xl font-bold mt-1"
-        >
-          ₱{{ formatNumber(summary.balance) }}
-        </p>
-      </div>
-
-      <!-- Budget Card -->
-      <div class="stat-card card-hover">
-        <div class="flex items-start justify-between mb-4">
-          <div class="stat-icon bg-warning-light text-warning">
-            <svg
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              ></path>
-            </svg>
-          </div>
-        </div>
-        <p
-          class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
-        >
-          Budget Used
-        </p>
-        <p class="text-2xl font-bold text-gray-800 dark:text-white mt-1">
-          {{ budgetUsedPercent }}%
-        </p>
-        <div class="progress-bar mt-3">
-          <div
-            class="progress-fill"
-            :class="
-              budgetUsedPercent > 80
-                ? 'bg-red-500'
-                : budgetUsedPercent > 60
-                  ? 'bg-amber-500'
-                  : 'bg-indigo-500'
-            "
-            :style="{ width: `${Math.min(budgetUsedPercent, 100)}%` }"
-          ></div>
-        </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          of ₱{{ formatNumber(totalBudgeted) }} budget
-        </p>
-      </div>
-    </div>
-
-    <!-- Charts Row -->
-    <!-- Charts Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-      <!-- Overview Chart -->
-      <div class="card p-4 sm:p-6">
-        <div class="flex items-center justify-between mb-4 sm:mb-6">
-          <h3
-            class="text-base sm:text-lg font-semibold text-gray-800 dark:text-white"
-          >
-            {{ chartTitle }}
-          </h3>
-        </div>
-        <div ref="chartRef" class="h-48 sm:h-64 w-full overflow-hidden"></div>
-      </div>
-
-      <!-- Expenses by Category -->
-      <div class="card p-4 sm:p-6">
-        <h3
-          class="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-4 sm:mb-6"
-        >
-          Expenses by Category
-        </h3>
-        <div class="space-y-4">
+        <div v-else class="space-y-3">
           <div
             v-for="(amount, category) in summary.expensesByCategory"
             :key="category"
-            class="flex items-center gap-4"
+            class="flex items-center gap-3"
           >
-            <div
-              class="w-3 h-3 rounded-full"
-              :style="{ background: getCategoryColor(category) }"
-            ></div>
+            <span
+              class="w-2.5 h-2.5 rounded-full flex-shrink-0"
+              :style="{ backgroundColor: getCategoryColor(String(category)) }"
+              aria-hidden="true"
+            ></span>
             <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between mb-1">
-                <span
-                  class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >{{ category }}</span
-                >
-                <span
-                  class="text-sm font-semibold text-gray-800 dark:text-white"
-                  >₱{{ formatNumber(amount) }}</span
-                >
+              <div class="flex items-center justify-between mb-1 gap-2">
+                <span class="text-[13px] truncate" style="color: var(--text-primary)">{{ category }}</span>
+                <span class="text-[13px] font-semibold financial-amount whitespace-nowrap" style="color: var(--text-primary)">
+                  ₱{{ formatNumber(amount) }}
+                </span>
               </div>
               <div class="progress-bar">
                 <div
                   class="progress-fill"
                   :style="{
                     width: `${getCategoryPercent(amount)}%`,
-                    background: getCategoryColor(category),
+                    backgroundColor: getCategoryColor(String(category)),
                   }"
                 ></div>
               </div>
             </div>
             <span
-              class="text-xs text-gray-500 dark:text-gray-400 w-10 text-right"
+              class="text-xs financial-amount w-10 text-right flex-shrink-0"
+              style="color: var(--text-muted)"
               >{{ getCategoryPercent(amount) }}%</span
             >
-          </div>
-
-          <div
-            v-if="Object.keys(summary.expensesByCategory).length === 0"
-            class="empty-state py-8"
-          >
-            <svg
-              class="empty-state-icon"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.5"
-                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              ></path>
-            </svg>
-            <p class="empty-state-title">No expenses yet</p>
-            <p class="empty-state-description">
-              Start adding expenses to see your spending breakdown
-            </p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Budget Status Table -->
+    <!-- Budget status -->
     <div class="card overflow-hidden">
-      <div class="p-6 border-b border-gray-100 dark:border-gray-700">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
-          Budget Status
-        </h3>
+      <div class="px-5 py-4 flex items-center justify-between" style="border-bottom: 1px solid var(--border)">
+        <h3 class="section-title">Budget Status</h3>
+        <router-link
+          v-if="filteredBudgetStatus.length"
+          to="/budgets"
+          class="text-[13px] font-medium hover:underline"
+          style="color: var(--accent-color)"
+          >Manage budgets</router-link
+        >
       </div>
-      <div class="overflow-x-auto">
+
+      <div v-if="!loading && filteredBudgetStatus.length" class="overflow-x-auto">
         <table class="table">
           <thead>
             <tr>
               <th>Category</th>
               <th>Type</th>
-              <th>Budget</th>
-              <th>Spent</th>
-              <th>Remaining</th>
+              <th class="!text-right">Budget</th>
+              <th class="!text-right">Spent</th>
+              <th class="!text-right">Remaining</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -356,10 +186,11 @@
             >
               <td>
                 <div class="flex items-center gap-2">
-                  <div
-                    class="w-2 h-2 rounded-full"
-                    :style="{ background: getCategoryColor(record.category) }"
-                  ></div>
+                  <span
+                    class="w-2 h-2 rounded-full flex-shrink-0"
+                    :style="{ backgroundColor: getCategoryColor(record.category) }"
+                    aria-hidden="true"
+                  ></span>
                   <span class="font-medium">{{ record.category }}</span>
                 </div>
               </td>
@@ -375,25 +206,23 @@
                   {{ formatBudgetType(record.type) }}
                 </span>
               </td>
-              <td>₱{{ formatNumber(record.budgeted) }}</td>
-              <td>₱{{ formatNumber(record.spent) }}</td>
+              <td class="text-right financial-amount">₱{{ formatNumber(record.budgeted) }}</td>
+              <td class="text-right financial-amount">₱{{ formatNumber(record.spent) }}</td>
               <td
-                :class="
-                  record.remaining >= 0
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-red-600 dark:text-red-400'
-                "
+                class="text-right financial-amount font-medium"
+                :style="{
+                  color:
+                    record.remaining > 0
+                      ? 'var(--income)'
+                      : record.remaining < 0
+                        ? 'var(--expense)'
+                        : 'var(--text-primary)',
+                }"
               >
-                {{ record.remaining >= 0 ? "+" : "" }}₱{{
-                  formatNumber(record.remaining)
-                }}
+                {{ record.remaining > 0 ? "+" : "" }}₱{{ formatNumber(record.remaining) }}
               </td>
               <td>
-                <span
-                  :class="
-                    record.remaining >= 0 ? 'badge-success' : 'badge-danger'
-                  "
-                >
+                <span :class="record.remaining >= 0 ? 'badge-success' : 'badge-danger'">
                   {{ record.remaining >= 0 ? "Under Budget" : "Over Budget" }}
                 </span>
               </td>
@@ -402,25 +231,14 @@
         </table>
       </div>
 
-      <div v-if="!filteredBudgetStatus.length" class="empty-state py-12">
-        <svg
-          class="empty-state-icon"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.5"
-            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-          ></path>
-        </svg>
-        <p class="empty-state-title">No budgets set</p>
-        <p class="empty-state-description">
-          Set up budgets to track your spending limits
-        </p>
-      </div>
+      <EmptyState
+        v-else-if="!loading"
+        :icon="TargetIcon"
+        title="No budget configured"
+        description="Set up budgets to track your spending limits for this period."
+        action-label="Create Budget"
+        @action="$router.push('/budgets')"
+      />
     </div>
   </div>
 </template>
@@ -432,20 +250,30 @@ import {
   computed,
   watch,
   onMounted,
+  onUnmounted,
   nextTick,
 } from "vue";
 import { useAuthStore } from "../stores/authStore";
 import { useThemeStore } from "../stores/themeStore";
 import axios from "axios";
 import type { DashboardSummary, BudgetView } from "../types";
+import PageHeader from "../components/PageHeader.vue";
+import StatCard from "../components/StatCard.vue";
+import EmptyState from "../components/EmptyState.vue";
+import ProgressBar from "../components/ProgressBar.vue";
+import PeriodSelector from "../components/PeriodSelector.vue";
+import {
+  ArrowUpIcon,
+  ArrowDownIcon,
+  WalletIcon,
+  ChartBarIcon,
+  PlusIcon,
+  ReceiptIcon,
+  TargetIcon,
+} from "../components/icons";
+import { getCategoryColor } from "../utils/categoryColors";
 
 const API_URL = "http://localhost:3001/api";
-
-const VIEW_TYPES = [
-  { value: "bi-monthly", label: "Bi-Monthly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
-];
 
 const MONTHS = [
   "January",
@@ -464,15 +292,16 @@ const MONTHS = [
 
 export default defineComponent({
   name: "DashboardView",
+  components: { PageHeader, StatCard, EmptyState, ProgressBar, PeriodSelector },
   setup() {
     const authStore = useAuthStore();
     const themeStore = useThemeStore();
     const chartRef = ref<HTMLElement | null>(null);
-    const currentView: any = ref<BudgetView>("bi-monthly");
+    const currentView = ref<BudgetView>("bi-monthly");
     const selectedYear = ref(new Date().getFullYear());
     const selectedMonth = ref(new Date().getMonth() + 1);
     const selectedHalfMonth = ref(1);
-    const viewTypes = ref(VIEW_TYPES);
+    const loading = ref(true);
 
     const summary = ref<DashboardSummary>({
       totalIncome: 0,
@@ -485,7 +314,7 @@ export default defineComponent({
       biMonthlyData: [],
     });
 
-    const fullName = computed(() => authStore.fullName || "User");
+    const firstName = computed(() => (authStore.fullName || "User").split(" ")[0]);
 
     const totalBudgeted = computed(
       () =>
@@ -498,13 +327,10 @@ export default defineComponent({
       return Math.round((spent / totalBudgeted.value) * 100);
     });
 
-    const viewLabel = computed(() => {
-      const labels: Record<string, string> = {
-        monthly: "Monthly",
-        yearly: "Yearly",
-        "bi-monthly": "Bi-Monthly",
-      };
-      return labels[currentView.value] || "Monthly";
+    const balanceColor = computed(() => {
+      if (summary.value.balance > 0) return "var(--income)";
+      if (summary.value.balance < 0) return "var(--expense)";
+      return "var(--text-primary)";
     });
 
     const filteredBudgetStatus = computed(() => {
@@ -531,9 +357,7 @@ export default defineComponent({
       } else if (currentView.value === "bi-monthly") {
         const monthName = MONTHS[selectedMonth.value - 1];
         const halfLabel =
-          selectedHalfMonth.value === 1
-            ? "1st Half (1-15)"
-            : "2nd Half (16-31)";
+          selectedHalfMonth.value === 1 ? "1st Half" : "2nd Half";
         return `${monthName} ${halfLabel} ${selectedYear.value}`;
       } else {
         return `${MONTHS[selectedMonth.value - 1]} ${selectedYear.value}`;
@@ -545,6 +369,15 @@ export default defineComponent({
       if (currentView.value === "bi-monthly") return "Bi-Monthly Overview";
       return "Monthly Overview";
     });
+
+    const chartData = computed<any[]>(() => {
+      if (currentView.value === "yearly") return summary.value.yearlyData || [];
+      if (currentView.value === "bi-monthly")
+        return summary.value.biMonthlyData || [];
+      return summary.value.monthlyData || [];
+    });
+
+    const hasChartData = computed(() => chartData.value.length > 0);
 
     const formatNumber = (num: number): string => {
       return num.toLocaleString("en-PH", {
@@ -563,27 +396,11 @@ export default defineComponent({
     };
 
     const getCategoryPercent = (amount: number): number => {
-      const total: any = Object.values(summary.value.expensesByCategory).reduce(
-        (a: any, b: any) => a + b,
+      const total = Object.values(summary.value.expensesByCategory).reduce(
+        (a, b) => a + b,
         0,
       );
       return total > 0 ? Math.round((amount / total) * 100) : 0;
-    };
-
-    const getCategoryColor = (category: string): string => {
-      const colors: Record<string, string> = {
-        Food: "#10b981",
-        Transportation: "#6366f1",
-        Housing: "#f59e0b",
-        Utilities: "#8b5cf6",
-        Healthcare: "#ec4899",
-        Entertainment: "#06b6d4",
-        Shopping: "#ef4444",
-        Education: "#84cc16",
-        Personal: "#14b8a6",
-        Other: "#64748b",
-      };
-      return colors[category] || "#6366f1";
     };
 
     const prevPeriod = () => {
@@ -634,6 +451,11 @@ export default defineComponent({
       fetchDashboard();
     };
 
+    const onHalfMonthChange = (half: number) => {
+      selectedHalfMonth.value = half;
+      fetchDashboard();
+    };
+
     const fetchDashboard = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -653,30 +475,45 @@ export default defineComponent({
           },
         );
         summary.value = response.data;
-        await nextTick();
-        renderChart();
       } catch (error) {
         console.error("Failed to fetch dashboard:", error);
+      } finally {
+        loading.value = false;
       }
+    };
+
+    /** Resolve current theme colors for the canvas chart. */
+    const chartThemeColors = () => {
+      const style = getComputedStyle(document.documentElement);
+      const get = (name: string) => style.getPropertyValue(name).trim();
+      return {
+        income: get("--income") || "#10b981",
+        expense: get("--expense") || "#ef4444",
+        text: get("--text-muted") || "#94a3b8",
+        grid: get("--border") || "#e2e8f0",
+      };
+    };
+
+    const chartIncomeColor = ref("#10b981");
+    const chartExpenseColor = ref("#ef4444");
+
+    const shortMoney = (value: number): string => {
+      if (value >= 1000) return `${(value / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+      return `${Math.round(value)}`;
     };
 
     const renderChart = () => {
       if (!chartRef.value) return;
-
-      let data: any[] = [];
-      if (currentView.value === "yearly") {
-        data = summary.value.yearlyData || [];
-      } else if (currentView.value === "bi-monthly") {
-        data = summary.value.biMonthlyData || [];
-      } else {
-        data = summary.value.monthlyData || [];
-      }
+      const data = chartData.value;
 
       if (!data.length) {
-        chartRef.value.innerHTML =
-          '<div class="flex items-center justify-center h-full text-gray-400 dark:text-gray-500">No data available</div>';
+        chartRef.value.innerHTML = "";
         return;
       }
+
+      const colors = chartThemeColors();
+      chartIncomeColor.value = colors.income;
+      chartExpenseColor.value = colors.expense;
 
       const canvas = document.createElement("canvas");
       canvas.style.width = "100%";
@@ -688,96 +525,136 @@ export default defineComponent({
       if (!ctx) return;
 
       const width = chartRef.value.offsetWidth;
-      const height = 256;
+      const height = chartRef.value.offsetHeight || 224;
       canvas.width = width * 2;
       canvas.height = height * 2;
       ctx.scale(2, 2);
 
-      const padding = { top: 40, right: 20, bottom: 40, left: 50 };
+      const padding = { top: 16, right: 16, bottom: 28, left: 44 };
       const chartWidth = width - padding.left - padding.right;
       const chartHeight = height - padding.top - padding.bottom;
 
       const maxValue =
         Math.max(
           ...data.map((d: any) => Math.max(d.income || 0, d.expenses || 0)),
-        ) * 1.2 || 1000;
+        ) *
+          1.15 || 1000;
+
+      // Subtle horizontal gridlines + y-axis labels
+      const gridLines = 4;
+      ctx.strokeStyle = colors.grid;
+      ctx.lineWidth = 1;
+      ctx.font = "10px Inter, sans-serif";
+      ctx.fillStyle = colors.text;
+      ctx.textAlign = "right";
+      for (let i = 0; i <= gridLines; i++) {
+        const y = padding.top + (chartHeight / gridLines) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+        ctx.fillText(
+          shortMoney(maxValue - (maxValue / gridLines) * i),
+          padding.left - 8,
+          y + 3,
+        );
+      }
+
       const barWidth = chartWidth / data.length / 3;
       const spacing = chartWidth / data.length;
 
-      ctx.fillStyle = "#64748b";
-      ctx.font = "11px Inter, sans-serif";
+      // X-axis labels
+      ctx.fillStyle = colors.text;
       ctx.textAlign = "center";
-
       data.forEach((d: any, i: number) => {
         const x = padding.left + i * spacing + spacing / 2;
         const label = d.month || d.label || String(d.year);
         ctx.fillText(
-          label.length > 10 ? label.substring(0, 10) + "..." : label,
+          label.length > 10 ? label.substring(0, 10) + "…" : label,
           x,
-          height - padding.bottom + 20,
+          height - padding.bottom + 16,
         );
       });
 
+      // Bars
       data.forEach((d: any, i: number) => {
         const x = padding.left + i * spacing + spacing / 2 - barWidth / 2;
 
-        ctx.fillStyle = "#10b981";
+        ctx.fillStyle = colors.income;
         const ih = ((d.income || 0) / maxValue) * chartHeight;
-        ctx.beginPath();
-        ctx.roundRect(
-          x,
-          padding.top + chartHeight - ih,
-          barWidth - 4,
-          ih,
-          [4, 4, 0, 0],
-        );
-        ctx.fill();
+        if (ih > 0) {
+          ctx.beginPath();
+          ctx.roundRect(
+            x,
+            padding.top + chartHeight - ih,
+            barWidth - 4,
+            ih,
+            [4, 4, 0, 0],
+          );
+          ctx.fill();
+        }
 
-        ctx.fillStyle = "#ef4444";
+        ctx.fillStyle = colors.expense;
         const eh = ((d.expenses || 0) / maxValue) * chartHeight;
-        ctx.beginPath();
-        ctx.roundRect(
-          x + barWidth + 4,
-          padding.top + chartHeight - eh,
-          barWidth - 4,
-          eh,
-          [4, 4, 0, 0],
-        );
-        ctx.fill();
+        if (eh > 0) {
+          ctx.beginPath();
+          ctx.roundRect(
+            x + barWidth + 4,
+            padding.top + chartHeight - eh,
+            barWidth - 4,
+            eh,
+            [4, 4, 0, 0],
+          );
+          ctx.fill();
+        }
       });
-
-      ctx.font = "10px Inter, sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillStyle = "#10b981";
-      ctx.fillRect(padding.left, 12, 10, 10);
-      ctx.fillStyle = "#64748b";
-      ctx.fillText("Income", padding.left + 14, 20);
-      ctx.fillStyle = "#ef4444";
-      ctx.fillRect(padding.left + 70, 12, 10, 10);
-      ctx.fillStyle = "#64748b";
-      ctx.fillText("Expenses", padding.left + 84, 20);
     };
+
+    // Re-render the canvas chart when the theme changes (colors are CSS vars).
+    watch(
+      () => themeStore.isDark,
+      async () => {
+        await nextTick();
+        renderChart();
+      },
+    );
+
+    const onResize = () => renderChart();
 
     watch(currentView, () => {
       fetchDashboard();
     });
 
+    watch(
+      () => summary.value,
+      async () => {
+        await nextTick();
+        renderChart();
+      },
+    );
+
     onMounted(() => {
       fetchDashboard();
+      window.addEventListener("resize", onResize);
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener("resize", onResize);
     });
 
     return {
       chartRef,
       summary,
-      fullName,
+      firstName,
       totalBudgeted,
       budgetUsedPercent,
+      balanceColor,
       filteredBudgetStatus,
       currentView,
-      viewTypes,
-      viewLabel,
       periodLabel,
       chartTitle,
+      hasChartData,
+      loading,
       formatNumber,
       formatBudgetType,
       getCategoryPercent,
@@ -785,8 +662,18 @@ export default defineComponent({
       selectedHalfMonth,
       prevPeriod,
       nextPeriod,
+      onHalfMonthChange,
       fetchDashboard,
       themeStore,
+      chartIncomeColor,
+      chartExpenseColor,
+      ArrowUpIcon,
+      ArrowDownIcon,
+      WalletIcon,
+      ChartBarIcon,
+      PlusIcon,
+      ReceiptIcon,
+      TargetIcon,
     };
   },
 });

@@ -1,119 +1,112 @@
 <template>
   <div class="animate-fade-in">
-    <div class="mb-6">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-1">
-        Financial Insights
-      </h1>
-      <p class="text-gray-500 dark:text-gray-400 text-sm">
-        Analysis of your finances
-      </p>
-    </div>
+    <PageHeader title="Financial Insights" subtitle="Analysis of your finances" />
 
     <div class="card p-6 mb-6">
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
-          <svg class="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background-color: var(--accent-50); color: var(--accent-color)">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
           </svg>
         </div>
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Monthly Summary</h2>
+        <h2 class="text-lg font-semibold text-ink">Monthly Summary</h2>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Total Income</p>
-          <p class="text-lg font-bold text-green-600">{{ formatCurrency(stats.totalIncome) }}</p>
+          <p class="text-sm text-ink-secondary">Total Income</p>
+          <p class="text-lg font-semibold text-income financial-amount">{{ formatCurrency(stats.totalIncome) }}</p>
         </div>
         <div>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Total Expenses</p>
-          <p class="text-lg font-bold text-red-600">{{ formatCurrency(stats.totalExpenses) }}</p>
+          <p class="text-sm text-ink-secondary">Total Expenses</p>
+          <p class="text-lg font-semibold text-expense financial-amount">{{ formatCurrency(stats.totalExpenses) }}</p>
         </div>
         <div>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Net Savings</p>
-          <p class="text-lg font-bold" :class="stats.netSavings >= 0 ? 'text-green-600' : 'text-red-600'">
+          <p class="text-sm text-ink-secondary">Net Savings</p>
+          <p class="text-lg font-semibold financial-amount" :style="{ color: stats.netSavings >= 0 ? 'var(--income)' : 'var(--expense)' }">
             {{ formatCurrency(stats.netSavings) }}
           </p>
         </div>
         <div>
-          <p class="text-sm text-gray-500 dark:text-gray-400">Savings Rate</p>
-          <p class="text-lg font-bold text-brand-600">{{ stats.savingsRate.toFixed(1) }}%</p>
+          <p class="text-sm text-ink-secondary">Savings Rate</p>
+          <p class="text-lg font-semibold financial-amount" style="color: var(--accent-color)">{{ stats.savingsRate.toFixed(1) }}%</p>
         </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       <div class="card p-6">
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Net Worth</p>
-        <p class="text-xl font-bold text-gray-800 dark:text-white">{{ formatCurrency(netWorth) }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Active accounts balance</p>
+        <p class="text-sm text-ink-secondary mb-1">Net Worth</p>
+        <p class="text-xl font-semibold text-ink financial-amount">{{ formatCurrency(netWorth) }}</p>
+        <p class="text-xs text-ink-muted mt-1">Active accounts balance</p>
       </div>
       <div class="card p-6">
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Burn Rate (MTD)</p>
-        <p class="text-xl font-bold text-gray-800 dark:text-white">{{ formatCurrency(burnRate.current) }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <p class="text-sm text-ink-secondary mb-1">Burn Rate (MTD)</p>
+        <p class="text-xl font-semibold text-ink financial-amount">{{ formatCurrency(burnRate.current) }}</p>
+        <p class="text-xs text-ink-muted mt-1">
           {{ formatCurrency(burnRate.daily) }}/day · proj. {{ formatCurrency(burnRate.projectedMonthly) }}/mo
         </p>
       </div>
       <div class="card p-6">
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Savings Rate (12 mo)</p>
-        <p class="text-xl font-bold text-brand-600">{{ savingsRateYear.toFixed(1) }}%</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Income vs expenses</p>
+        <p class="text-sm text-ink-secondary mb-1">Savings Rate (12 mo)</p>
+        <p class="text-xl font-semibold financial-amount" style="color: var(--accent-color)">{{ savingsRateYear.toFixed(1) }}%</p>
+        <p class="text-xs text-ink-muted mt-1">Income vs expenses</p>
       </div>
     </div>
 
     <div class="card p-6 mb-6">
-      <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Spending by Category</h2>
-      <div v-if="expenseCategories.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
+      <h2 class="text-lg font-semibold text-ink mb-4">Spending by Category</h2>
+      <div v-if="expenseCategories.length === 0" class="text-sm text-ink-secondary">
         No expense data yet.
       </div>
       <div v-else class="space-y-3">
         <div v-for="cat in expenseCategories" :key="cat.category" class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: categoryColor(cat.category) }"></div>
-            <span class="text-gray-700 dark:text-gray-300">{{ cat.category }}</span>
+            <span class="text-ink-secondary">{{ cat.category }}</span>
           </div>
           <div class="text-right">
-            <span class="font-medium text-gray-800 dark:text-white">{{ formatCurrency(cat.amount) }}</span>
-            <span class="text-sm text-gray-500 ml-2">({{ cat.percentage }}%)</span>
+            <span class="font-medium text-ink financial-amount">{{ formatCurrency(cat.amount) }}</span>
+            <span class="text-sm text-ink-muted ml-2">({{ cat.percentage }}%)</span>
           </div>
         </div>
       </div>
     </div>
 
     <div class="card p-6 mb-6">
-      <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Income by Category</h2>
-      <div v-if="incomeCategories.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
+      <h2 class="text-lg font-semibold text-ink mb-4">Income by Category</h2>
+      <div v-if="incomeCategories.length === 0" class="text-sm text-ink-secondary">
         No income data yet.
       </div>
       <div v-else class="space-y-3">
         <div v-for="cat in incomeCategories" :key="cat.category" class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: categoryColor(cat.category) }"></div>
-            <span class="text-gray-700 dark:text-gray-300">{{ cat.category }}</span>
+            <span class="text-ink-secondary">{{ cat.category }}</span>
           </div>
           <div class="text-right">
-            <span class="font-medium text-gray-800 dark:text-white">{{ formatCurrency(cat.amount) }}</span>
-            <span class="text-sm text-gray-500 ml-2">({{ cat.percentage }}%)</span>
+            <span class="font-medium text-ink financial-amount">{{ formatCurrency(cat.amount) }}</span>
+            <span class="text-sm text-ink-muted ml-2">({{ cat.percentage }}%)</span>
           </div>
         </div>
       </div>
     </div>
 
     <div class="card p-6">
-      <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Expense Trend (12 mo)</h2>
-      <div v-if="trend.labels.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
+      <h2 class="text-lg font-semibold text-ink mb-4">Expense Trend (12 mo)</h2>
+      <div v-if="trend.labels.length === 0" class="text-sm text-ink-secondary">
         Not enough data for a trend yet.
       </div>
       <div v-else class="space-y-2">
         <div v-for="(label, i) in trend.labels" :key="label">
           <div class="flex items-center justify-between text-sm mb-1">
-            <span class="text-gray-700 dark:text-gray-300">{{ label }}</span>
-            <span class="font-medium text-gray-800 dark:text-white">{{ formatCurrency(trend.values[i]) }}</span>
+            <span class="text-ink-secondary">{{ label }}</span>
+            <span class="font-medium text-ink financial-amount">{{ formatCurrency(trend.values[i]) }}</span>
           </div>
-          <div class="h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+          <div class="progress-bar">
             <div
-              class="h-full rounded-full bg-[var(--accent-color)]"
-              :style="{ width: trendMax > 0 ? Math.round((trend.values[i] / trendMax) * 100) + '%' : '0%' }"
+              class="progress-fill"
+              :style="{ width: trendMax > 0 ? Math.round((trend.values[i] / trendMax) * 100) + '%' : '0%', backgroundColor: 'var(--accent-color)' }"
             ></div>
           </div>
         </div>
@@ -126,6 +119,7 @@
 import { defineComponent, reactive, onMounted, ref, computed } from 'vue';
 import axios from 'axios';
 import { toast } from '../components/Toast.vue';
+import PageHeader from '../components/PageHeader.vue';
 
 const API_URL = 'http://localhost:3001/api';
 
@@ -139,6 +133,7 @@ const PALETTE = ['#ef4444', '#3b82f6', '#8b5cf6', '#f97316', '#22c55e', '#14b8a6
 
 export default defineComponent({
   name: 'InsightsView',
+  components: { PageHeader },
   setup() {
     const stats = reactive({
       totalIncome: 0,

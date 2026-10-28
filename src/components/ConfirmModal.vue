@@ -3,26 +3,19 @@
     <transition name="confirm">
       <div
         v-if="visible"
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+        class="modal-overlay"
         @click.self="handleCancel"
       >
-        <div
-          class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg max-w-sm w-full overflow-hidden border border-gray-200 dark:border-gray-700"
-        >
+        <div class="modal-content !max-w-sm animate-scale-in" role="alertdialog" aria-modal="true">
           <div class="p-6 text-center">
             <div
               class="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-              :class="[
-                type === 'danger'
-                  ? 'bg-red-100 dark:bg-red-900/30'
-                  : type === 'warning'
-                    ? 'bg-amber-100 dark:bg-amber-900/30'
-                    : 'bg-blue-100 dark:bg-blue-900/30',
-              ]"
+              :style="iconStyle"
             >
               <svg
                 v-if="type === 'danger'"
-                class="w-8 h-8 text-red-600 dark:text-red-400"
+                class="w-8 h-8"
+                :style="{ color: 'var(--expense)' }"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -36,7 +29,8 @@
               </svg>
               <svg
                 v-else-if="type === 'warning'"
-                class="w-8 h-8 text-amber-600 dark:text-amber-400"
+                class="w-8 h-8"
+                :style="{ color: 'var(--warning)' }"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -50,7 +44,8 @@
               </svg>
               <svg
                 v-else
-                class="w-8 h-8 text-blue-600 dark:text-blue-400"
+                class="w-8 h-8"
+                :style="{ color: 'var(--accent-color)' }"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -63,33 +58,28 @@
                 ></path>
               </svg>
             </div>
-            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2">
+            <h3 class="text-lg font-semibold text-ink mb-2">
               {{ title }}
             </h3>
-            <p class="text-gray-500 dark:text-gray-400 text-sm">
+            <p class="text-ink-secondary text-sm">
               {{ content }}
             </p>
           </div>
           <div
-            class="flex border-t border-gray-100 dark:border-gray-700 rounded-b-3xl overflow-hidden"
+            class="flex border-t rounded-b-2xl overflow-hidden"
+            style="border-color: var(--border)"
           >
             <button
               @click="handleCancel"
-              class="flex-1 py-4 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              class="flex-1 py-4 text-sm font-medium text-ink-secondary hover:bg-[var(--surface-elevated)] transition-colors"
             >
               {{ cancelText }}
             </button>
-            <div class="w-px bg-gray-100 dark:bg-gray-700"></div>
+            <div class="w-px" style="background: var(--border)"></div>
             <button
               @click="handleConfirm"
-              class="flex-1 py-4 text-sm font-medium transition-colors"
-              :class="[
-                type === 'danger'
-                  ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-                  : type === 'warning'
-                    ? 'text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                    : 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20',
-              ]"
+              class="flex-1 py-4 text-sm font-semibold transition-colors"
+              :style="confirmButtonStyle"
             >
               {{ confirmText }}
             </button>
@@ -101,7 +91,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, computed } from "vue";
 
 export default defineComponent({
   name: "ConfirmModal",
@@ -113,6 +103,25 @@ export default defineComponent({
     const confirmText = ref("Confirm");
     const cancelText = ref("Cancel");
     let resolveRef: ((value: boolean) => void) | null = null;
+
+    const iconColor = computed(() =>
+      type.value === "danger"
+        ? "var(--expense)"
+        : type.value === "warning"
+          ? "var(--warning)"
+          : "var(--accent-color)"
+    );
+    const iconStyle = computed(() => ({
+      backgroundColor:
+        type.value === "danger"
+          ? "var(--expense-soft)"
+          : type.value === "warning"
+            ? "var(--warning-soft)"
+            : "var(--accent-50)",
+    }));
+    const confirmButtonStyle = computed(() => ({
+      color: iconColor.value,
+    }));
 
     const show = (opts: {
       title: string;
@@ -150,6 +159,8 @@ export default defineComponent({
       type,
       confirmText,
       cancelText,
+      iconStyle,
+      confirmButtonStyle,
       show,
       handleConfirm,
       handleCancel,

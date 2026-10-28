@@ -1,21 +1,13 @@
 <template>
   <div class="animate-fade-in">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-1">
-          Financial Goals
-        </h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">
-          Set and track your savings goals
-        </p>
-      </div>
-      <button @click="showAddModal = true" class="btn btn-primary">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-        </svg>
-        Add Goal
-      </button>
-    </div>
+    <PageHeader title="Financial Goals" subtitle="Set and track your savings goals">
+      <template #actions>
+        <button @click="showAddModal = true" class="btn btn-primary">
+          <component :is="PlusIcon" class="w-4 h-4" />
+          Add Goal
+        </button>
+      </template>
+    </PageHeader>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
       <div
@@ -25,10 +17,16 @@
       >
         <div class="flex items-start justify-between mb-3">
           <div
-            class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold"
+            class="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold overflow-hidden"
             :style="{ backgroundColor: getCategoryColor(goal.category) }"
           >
-            {{ goal.name.charAt(0).toUpperCase() }}
+            <img
+              v-if="goal.imageUrl"
+              :src="goal.imageUrl"
+              :alt="goal.name"
+              class="w-full h-full object-cover"
+            />
+            <template v-else>{{ goal.name.charAt(0).toUpperCase() }}</template>
           </div>
           <span
             class="badge"
@@ -42,68 +40,67 @@
           </span>
         </div>
 
-        <h3 class="font-semibold text-gray-800 dark:text-white mb-1">{{ goal.name }}</h3>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3 capitalize">{{ goal.category }}</p>
+        <h3 class="font-semibold mb-1" style="color: var(--text-primary)">{{ goal.name }}</h3>
+        <p class="text-sm mb-3 capitalize" style="color: var(--text-secondary)">{{ goal.category }}</p>
 
         <div class="progress-bar mb-2">
           <div
             class="progress-fill"
-            :style="{ width: getProgress(goal) + '%', backgroundColor: themeStore.accentColor }"
+            :style="{ width: getProgress(goal) + '%', backgroundColor: 'var(--accent-color)' }"
           ></div>
         </div>
 
         <div class="flex justify-between text-sm mb-3">
-          <span class="text-gray-600 dark:text-gray-400">{{ formatCurrency(goal.currentAmount) }}</span>
-          <span class="text-gray-500">{{ formatCurrency(goal.targetAmount) }}</span>
+          <span class="financial-amount" style="color: var(--text-primary)">{{ formatCurrency(goal.currentAmount) }}</span>
+          <span class="financial-amount" style="color: var(--text-secondary)">{{ formatCurrency(goal.targetAmount) }}</span>
         </div>
 
         <div class="flex gap-2">
           <button @click="contribute(goal)" class="btn btn-primary flex-1 text-sm">
             Contribute
           </button>
-          <button @click="editGoal(goal)" class="btn btn-ghost">
+          <button @click="editGoal(goal)" class="btn btn-ghost" title="Edit goal" aria-label="Edit goal">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a3.5 3.5 0 11-4.95 4.95l-4.95 4.95a3.5 3.5 0 014.95 4.95l5.657 5.657a3.5 3.5 0 01-4.95 4.95l-5.657-5.657a3.5 3.5 0 00-4.95 0"></path>
             </svg>
           </button>
-          <button @click="deleteGoal(goal.id)" class="btn btn-ghost text-red-500">
+          <button @click="deleteGoal(goal.id)" class="btn btn-ghost" style="color: var(--expense)" title="Delete goal" aria-label="Delete goal">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1H6a1 1 0 00-1 1v3M4 7h16"></path>
             </svg>
           </button>
         </div>
 
-        <p v-if="goal.isCompleted" class="text-sm text-green-600 mt-2 font-semibold">Completed!</p>
-        <p v-else-if="goal.deadline" class="text-sm text-gray-500 mt-2">
+        <p v-if="goal.isCompleted" class="text-sm mt-2 font-semibold" style="color: var(--income)">Completed!</p>
+        <p v-else-if="goal.deadline" class="text-sm mt-2" style="color: var(--text-secondary)">
           Target: {{ formatDate(goal.deadline) }}
         </p>
       </div>
     </div>
 
-    <div v-if="goals.length === 0" class="empty-state">
-      <div class="empty-state-icon">
-        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-      </div>
-      <h3 class="empty-state-title">No goals yet</h3>
-      <p class="empty-state-description">Create your first savings goal</p>
-      <button @click="showAddModal = true" class="btn btn-primary mt-4">Add Goal</button>
-    </div>
+    <EmptyState
+      v-if="goals.length === 0"
+      :icon="TargetIcon"
+      title="No goals yet"
+      description="Create your first savings goal."
+      action-label="Add Goal"
+      @action="showAddModal = true"
+    />
 
-    <div v-if="showAddModal || showContributeModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="closeModal">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md animate-fade-in">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-bold text-gray-800 dark:text-white">
+    <div v-if="showAddModal || showContributeModal" class="modal-overlay" @click.self="closeModal">
+      <div class="modal-content animate-scale-in" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <h3 class="section-title">
             {{ showContributeModal ? 'Contribute' : (editMode ? 'Edit' : 'Add') }} Goal
           </h3>
-          <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button @click="closeModal" class="p-1.5 rounded-lg hover:bg-[var(--surface-elevated)]" style="color: var(--text-muted)" aria-label="Close">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
 
+        <div class="modal-body">
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <div v-if="!showContributeModal">
             <label class="label">Goal Name</label>
@@ -145,11 +142,22 @@
             </select>
           </div>
 
-          <div class="flex gap-3">
+          <div v-if="!showContributeModal">
+            <label class="label">Image URL (Optional)</label>
+            <input
+              v-model="form.imageUrl"
+              type="url"
+              class="input"
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+
+          <div class="flex gap-3 pt-2">
             <button type="button" @click="closeModal" class="btn btn-secondary flex-1">Cancel</button>
             <button type="submit" class="btn btn-primary flex-1">{{ showContributeModal ? 'Add' : (editMode ? 'Update' : 'Create') }}</button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   </div>
@@ -160,17 +168,21 @@ import { defineComponent, reactive, onMounted, ref } from 'vue';
 import { useGoalStore, type Goal } from '../stores/goalStore';
 import { useThemeStore } from '../stores/themeStore';
 import { toast } from '../components/Toast.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EmptyState from '../components/EmptyState.vue';
+import { PlusIcon, TargetIcon } from '../components/icons';
 
 const categoryColors: Record<string, string> = {
   emergency: '#ef4444',
   investment: '#8b5cf6',
   purchase: '#f97316',
   travel: '#0ea5e9',
-  other: '#6366f1'
+  other: '#64748b'
 };
 
 export default defineComponent({
   name: 'GoalsView',
+  components: { PageHeader, EmptyState },
   setup() {
     const goalStore = useGoalStore();
     const themeStore = useThemeStore();
@@ -185,7 +197,8 @@ export default defineComponent({
       currentAmount: 0,
       deadline: '',
       category: 'other' as string,
-      priority: 'medium' as string
+      priority: 'medium' as string,
+      imageUrl: ''
     });
 
     const formatCurrency = (amount: number) => {
@@ -201,7 +214,7 @@ export default defineComponent({
     };
 
     const getCategoryColor = (category: string) => {
-      return categoryColors[category] || '#6366f1';
+      return categoryColors[category] || '#64748b';
     };
 
     const contribute = (goal: Goal) => {
@@ -217,6 +230,7 @@ export default defineComponent({
       form.deadline = goal.deadline || '';
       form.category = goal.category;
       form.priority = goal.priority;
+      form.imageUrl = goal.imageUrl || '';
       editMode.value = true;
       showAddModal.value = true;
     };
@@ -261,6 +275,7 @@ export default defineComponent({
       form.deadline = '';
       form.category = 'other';
       form.priority = 'medium';
+      form.imageUrl = '';
     };
 
     onMounted(async () => {
@@ -282,7 +297,9 @@ export default defineComponent({
       editGoal,
       deleteGoal,
       handleSubmit,
-      closeModal
+      closeModal,
+      PlusIcon,
+      TargetIcon
     };
   }
 });

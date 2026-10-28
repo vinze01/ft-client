@@ -1,15 +1,7 @@
 <template>
   <div class="animate-fade-in">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white mb-1">
-          Savings
-        </h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm">
-          Automate savings and track projections
-        </p>
-      </div>
-      <div class="flex gap-2">
+    <PageHeader title="Savings" subtitle="Automate savings and track projections">
+      <template #actions>
         <button
           v-if="savingsStore.hasConfig"
           @click="toggleActive"
@@ -18,11 +10,11 @@
         >
           {{ savingsStore.isActive ? 'Pause' : 'Activate' }}
         </button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div class="card p-6 mb-6">
-      <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Savings Plan</h2>
+      <h2 class="text-lg font-semibold text-ink mb-4">Savings Plan</h2>
       <form @submit.prevent="saveConfig" class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="label">Mode</label>
@@ -59,7 +51,7 @@
           <input v-model.number="configForm.minBalance" type="number" min="0" step="0.01" class="input" placeholder="0.00" />
         </div>
         <div class="flex items-end">
-          <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 pb-3">
+          <label class="flex items-center gap-2 text-sm text-ink-secondary pb-3">
             <input v-model="configForm.isActive" type="checkbox" class="w-4 h-4" />
             Active
           </label>
@@ -68,13 +60,13 @@
           <button type="submit" class="btn btn-primary">Save Plan</button>
         </div>
       </form>
-      <p v-if="!savingsStore.hasConfig" class="text-sm text-gray-500 dark:text-gray-400 mt-3">
+      <p v-if="!savingsStore.hasConfig" class="text-sm text-ink-secondary mt-3">
         No savings plan yet. Saving this form creates one.
       </p>
     </div>
 
     <div class="card p-6 mb-6">
-      <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Calculate Savings</h2>
+      <h2 class="text-lg font-semibold text-ink mb-4">Calculate Savings</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
           <label class="label">Period Start</label>
@@ -90,18 +82,18 @@
           </button>
         </div>
       </div>
-      <div v-if="savingsStore.lastCalculation" class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-        <p class="text-sm text-gray-500 dark:text-gray-400">Allocated this run</p>
-        <p class="text-xl font-bold text-emerald-600">{{ formatCurrency(savingsStore.lastCalculation.allocated) }}</p>
+      <div v-if="savingsStore.lastCalculation" class="p-4 rounded-xl bg-surface-elevated">
+        <p class="text-sm text-ink-secondary">Allocated this run</p>
+        <p class="text-xl font-semibold text-income financial-amount">{{ formatCurrency(savingsStore.lastCalculation.allocated) }}</p>
       </div>
-      <p v-if="!savingsStore.hasConfig" class="text-sm text-gray-500 dark:text-gray-400">
+      <p v-if="!savingsStore.hasConfig" class="text-sm text-ink-secondary">
         Save a plan first, then run a calculation.
       </p>
     </div>
 
     <div class="card p-6 mb-6">
-      <h2 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Allocation History</h2>
-      <div v-if="savingsStore.allocations.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
+      <h2 class="text-lg font-semibold text-ink mb-4">Allocation History</h2>
+      <div v-if="savingsStore.allocations.length === 0" class="text-sm text-ink-secondary">
         No allocations yet. Run a calculation to create some.
       </div>
       <div v-else class="table-container">
@@ -116,9 +108,9 @@
           </thead>
           <tbody>
             <tr v-for="alloc in savingsStore.allocations" :key="alloc.id">
-              <td class="font-bold text-emerald-600">{{ formatCurrency(alloc.amount) }}</td>
-              <td class="text-gray-800 dark:text-white">{{ alloc.goal?.name || '-' }}</td>
-              <td class="text-gray-500 dark:text-gray-400">{{ formatDate(alloc.periodStart) }} → {{ formatDate(alloc.periodEnd) }}</td>
+              <td class="font-semibold text-income financial-amount">{{ formatCurrency(alloc.amount) }}</td>
+              <td class="text-ink">{{ alloc.goal?.name || '-' }}</td>
+              <td class="text-ink-secondary">{{ formatDate(alloc.periodStart) }} → {{ formatDate(alloc.periodEnd) }}</td>
               <td><span class="badge badge-success">{{ alloc.status }}</span></td>
             </tr>
           </tbody>
@@ -128,9 +120,9 @@
 
     <div class="card p-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Projection</h2>
+        <h2 class="text-lg font-semibold text-ink">Projection</h2>
         <div class="flex gap-2 items-center">
-          <span class="text-sm text-gray-500 dark:text-gray-400">Months</span>
+          <span class="text-sm text-ink-secondary">Months</span>
           <select v-model.number="projectionMonths" @change="loadProjection" class="input !w-auto !py-2">
             <option :value="6">6</option>
             <option :value="12">12</option>
@@ -138,19 +130,19 @@
           </select>
         </div>
       </div>
-      <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 mb-4">
-        <p class="text-sm text-gray-500 dark:text-gray-400">Total projected ({{ projectionMonths }} mo)</p>
-        <p class="text-xl font-bold text-gray-800 dark:text-white">{{ formatCurrency(savingsStore.totalProjected) }}</p>
+      <div class="p-4 rounded-xl bg-surface-elevated mb-4">
+        <p class="text-sm text-ink-secondary">Total projected ({{ projectionMonths }} mo)</p>
+        <p class="text-xl font-semibold text-ink financial-amount">{{ formatCurrency(savingsStore.totalProjected) }}</p>
       </div>
-      <div v-if="savingsStore.projections.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
+      <div v-if="savingsStore.projections.length === 0" class="text-sm text-ink-secondary">
         No projection available. Activate a savings plan first.
       </div>
       <div v-else class="space-y-2">
         <div v-for="p in savingsStore.projections" :key="p.month" class="flex items-center justify-between text-sm">
-          <span class="text-gray-700 dark:text-gray-300">{{ p.month }}</span>
-          <span class="font-medium text-gray-800 dark:text-white">
+          <span class="text-ink-secondary">{{ p.month }}</span>
+          <span class="font-medium text-ink financial-amount">
             {{ formatCurrency(p.projectedSavings) }}
-            <span class="text-gray-500 dark:text-gray-400 ml-2">cum. {{ formatCurrency(p.cumulativeSavings) }}</span>
+            <span class="text-ink-muted ml-2">cum. {{ formatCurrency(p.cumulativeSavings) }}</span>
           </span>
         </div>
       </div>
@@ -163,9 +155,11 @@ import { defineComponent, reactive, onMounted, ref } from 'vue';
 import { useSavingsStore } from '../stores/savingsStore';
 import { useAccountStore } from '../stores/accountStore';
 import { toast } from '../components/Toast.vue';
+import PageHeader from '../components/PageHeader.vue';
 
 export default defineComponent({
   name: 'SavingsView',
+  components: { PageHeader },
   setup() {
     const savingsStore = useSavingsStore();
     const accountStore = useAccountStore();
