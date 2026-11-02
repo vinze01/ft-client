@@ -1,0 +1,13 @@
+// Cloudflare Workers static-assets deployment config for the Vue SPA.
+// The Git-connected build runs `npm run build` (producing dist/), then
+// `npx wrangler deploy` serves dist/ from Cloudflare's edge.
+{
+  "name": "ft-client",
+  "compatibility_date": "2026-11-02",
+  "assets": {
+    "directory": "./dist",
+    // vue-router uses history mode: serve index.html for unknown paths
+    // so deep links like /expenses and page refreshes work.
+    "not_found_handling": "single-page-application"
+  }
+}
