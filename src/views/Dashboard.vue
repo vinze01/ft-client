@@ -273,7 +273,8 @@ import {
 } from "../components/icons";
 import { getCategoryColor } from "../utils/categoryColors";
 
-const API_URL = "http://localhost:3001/api";
+// API base URL - override at build time with VITE_API_URL (defaults to the local dev server)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 const MONTHS = [
   "January",

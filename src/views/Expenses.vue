@@ -463,7 +463,8 @@ import PageHeader from "../components/PageHeader.vue";
 import EmptyState from "../components/EmptyState.vue";
 import { PlusIcon, WalletIcon } from "../components/icons";
 
-const API_URL = "http://localhost:3001/api";
+// API base URL - override at build time with VITE_API_URL (defaults to the local dev server)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 const CATEGORIES = [
   "Food",

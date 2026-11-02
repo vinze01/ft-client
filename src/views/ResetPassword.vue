@@ -101,6 +101,9 @@ import { toast } from "../components/Toast.vue";
 import AuthLayout from "../components/AuthLayout.vue";
 import { EyeIcon, EyeOffIcon, KeyIcon } from "../components/icons";
 
+// API base URL - override at build time with VITE_API_URL (defaults to the local dev server)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+
 export default defineComponent({
   name: "ResetPasswordView",
   components: { AuthLayout },
@@ -139,7 +142,7 @@ export default defineComponent({
 
       loading.value = true;
       try {
-        await axios.post("http://localhost:3001/api/reset-password", {
+        await axios.post(`${API_URL}/reset-password`, {
           token: token.value,
           newPassword: newPassword.value,
         });

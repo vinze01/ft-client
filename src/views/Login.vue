@@ -183,6 +183,9 @@ import { useAuthStore } from "../stores/authStore";
 import AuthLayout from "../components/AuthLayout.vue";
 import { EyeIcon, EyeOffIcon, XIcon } from "../components/icons";
 
+// API base URL - override at build time with VITE_API_URL (defaults to the local dev server)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+
 interface FormState {
   username: string;
   password: string;
@@ -232,7 +235,7 @@ export default defineComponent({
 
       forgotLoading.value = true;
       try {
-        await fetch("http://localhost:3001/api/forgot-password", {
+        await fetch(`${API_URL}/forgot-password`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: forgotEmail.value }),

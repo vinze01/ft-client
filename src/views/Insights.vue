@@ -121,7 +121,8 @@ import axios from 'axios';
 import { toast } from '../components/Toast.vue';
 import PageHeader from '../components/PageHeader.vue';
 
-const API_URL = 'http://localhost:3001/api';
+// API base URL - override at build time with VITE_API_URL (defaults to the local dev server)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 interface CategorySlice {
   category: string;

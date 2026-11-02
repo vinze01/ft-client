@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3001/api';
+// API base URL - override at build time with VITE_API_URL (defaults to the local dev server)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export interface Goal {
   id: number;
