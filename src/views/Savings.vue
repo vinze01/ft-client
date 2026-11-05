@@ -57,7 +57,7 @@
           </label>
         </div>
         <div class="md:col-span-2 flex justify-end">
-          <button type="submit" class="btn btn-primary">Save Plan</button>
+          <button type="submit" class="btn btn-primary" :disabled="saving">{{ saving ? 'Saving…' : 'Save Plan' }}</button>
         </div>
       </form>
       <p v-if="!savingsStore.hasConfig" class="text-sm text-ink-secondary mt-3">
@@ -164,6 +164,7 @@ export default defineComponent({
     const savingsStore = useSavingsStore();
     const accountStore = useAccountStore();
     const projectionMonths = ref(12);
+    const saving = ref(false);
 
     const configForm = reactive({
       mode: 'fixed_percentage' as string,
@@ -200,11 +201,15 @@ export default defineComponent({
     };
 
     const saveConfig = async () => {
+      if (saving.value) return;
+      saving.value = true;
       try {
         await savingsStore.saveConfig({ ...configForm });
         toast.success('Savings plan saved');
       } catch (e: any) {
         toast.error(e.response?.data?.error || 'Failed to save savings plan');
+      } finally {
+        saving.value = false;
       }
     };
 
@@ -257,6 +262,7 @@ export default defineComponent({
       configForm,
       calcForm,
       projectionMonths,
+      saving,
       formatCurrency,
       formatDate,
       saveConfig,

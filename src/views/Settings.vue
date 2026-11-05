@@ -705,17 +705,25 @@ export default defineComponent({
     };
 
     const updateProfile = async () => {
+      const contactNo = form.contactNo.trim();
+      // The column is numeric: an empty or non-numeric value used to be sent as
+      // NaN and rejected server-side with an opaque error.
+      if (contactNo && !/^\d+$/.test(contactNo)) {
+        toast.error("Contact number must contain digits only");
+        return;
+      }
+
       savingProfile.value = true;
       try {
         const token = localStorage.getItem("token");
-        await axios.put(
+        const response = await axios.put(
           `${API_URL}/users/profile`,
           {
             firstName: form.firstName,
             middleName: form.middleName,
             lastName: form.lastName,
             email: form.email,
-            contactNo: parseInt(form.contactNo),
+            ...(contactNo ? { contactNo } : {}),
           },
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -723,15 +731,17 @@ export default defineComponent({
         );
 
         if (authStore.user) {
-          authStore.user.firstName = form.firstName;
-          authStore.user.middleName = form.middleName;
-          authStore.user.lastName = form.lastName;
-          authStore.user.email = form.email;
-          authStore.user.contactNo = parseInt(form.contactNo);
+          authStore.user.firstName = response.data.firstName;
+          authStore.user.middleName = response.data.middleName;
+          authStore.user.lastName = response.data.lastName;
+          authStore.user.email = response.data.email;
+          authStore.user.contactNo = response.data.contactNo;
+          // Without this, a reload restored the old profile from storage.
+          localStorage.setItem("user", JSON.stringify(authStore.user));
         }
         toast.success("Profile updated successfully");
-      } catch (error) {
-        toast.error("Failed to update profile");
+      } catch (error: any) {
+        toast.error(error.response?.data?.error || "Failed to update profile");
       } finally {
         savingProfile.value = false;
       }

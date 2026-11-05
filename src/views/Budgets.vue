@@ -13,7 +13,7 @@
     <!-- Filters -->
     <div class="card p-4 mb-6">
       <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <select v-model="filters.type" @change="fetchBudgets" class="input">
+        <select v-model="filters.type" @change="onTypeChange" class="input">
           <option value="">All Types</option>
           <option value="monthly">Monthly</option>
           <option value="yearly">Yearly</option>
@@ -740,11 +740,9 @@ export default defineComponent({
 
         let filtered = response.data;
 
-        if (filters.type === "monthly" && filters.month) {
-          filtered = filtered.filter((b) => b.month === filters.month);
-        }
-
-        if (filters.type === "bi-monthly" && filters.month) {
+        // Month applies to monthly, bi-monthly AND "All Types" — previously a
+        // month picked under "All Types" was silently ignored.
+        if (filters.month) {
           filtered = filtered.filter((b) => b.month === filters.month);
         }
 
@@ -870,12 +868,20 @@ export default defineComponent({
           await axios.delete(`${API_URL}/budgets/${budget.id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          toast.success("Budget deleted automatically");
+          toast.success("Budget deleted");
           await fetchBudgets();
         } catch (error) {
           toast.error("Failed to delete budget");
         }
       }
+    };
+
+    // Switching type hides the month/period dropdowns but used to leave the
+    // stale values active on the next fetch.
+    const onTypeChange = () => {
+      filters.month = "";
+      filters.halfMonth = "";
+      fetchBudgets();
     };
 
     const selectAllMonths = () => {
@@ -923,6 +929,7 @@ export default defineComponent({
       getCategoryColor,
       getPeriodLabel,
       fetchBudgets,
+      onTypeChange,
       showModal,
       editBudget,
       closeModal,

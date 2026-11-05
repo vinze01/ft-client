@@ -158,8 +158,10 @@
           </div>
 
           <div class="flex gap-3 pt-2">
-            <button type="button" @click="closeModal" class="btn btn-secondary flex-1">Cancel</button>
-            <button type="submit" class="btn btn-primary flex-1">{{ editMode ? 'Update' : 'Create' }}</button>
+            <button type="button" @click="closeModal" class="btn btn-secondary flex-1" :disabled="saving">Cancel</button>
+            <button type="submit" class="btn btn-primary flex-1" :disabled="saving">
+              {{ saving ? 'Saving…' : (editMode ? 'Update' : 'Create') }}
+            </button>
           </div>
         </form>
         </div>
@@ -172,6 +174,8 @@
 import { defineComponent, reactive, onMounted, ref } from 'vue';
 import axios from 'axios';
 import { useBillStore, type Bill } from '../stores/billStore';
+import { toast } from '../components/Toast.vue';
+import { confirm } from '../components/ConfirmModal.vue';
 import PageHeader from '../components/PageHeader.vue';
 import EmptyState from '../components/EmptyState.vue';
 import { PlusIcon, ReceiptIcon } from '../components/icons';
@@ -186,6 +190,7 @@ export default defineComponent({
     const billStore = useBillStore();
     const showAddModal = ref(false);
     const editMode = ref(false);
+    const saving = ref(false);
     const accounts = ref<{ id: number; name: string }[]>([]);
 
     const form = reactive({
@@ -236,26 +241,62 @@ export default defineComponent({
     };
 
     const deleteBill = async (id: number) => {
-      if (confirm('Delete this bill?')) {
+      const ok = await confirm({
+        title: 'Delete Bill',
+        content: 'Are you sure you want to delete this bill?',
+        confirmText: 'Delete'
+      });
+      if (!ok) return;
+
+      try {
         await billStore.deleteBill(id);
+        toast.success('Bill deleted');
+      } catch (e: any) {
+        toast.error(e.response?.data?.error || 'Failed to delete bill');
       }
     };
 
     const markPaid = async (id: number) => {
-      await billStore.markPaid(id);
+      try {
+        await billStore.markPaid(id);
+        toast.success('Bill marked as paid');
+      } catch (e: any) {
+        toast.error(e.response?.data?.error || 'Failed to mark bill as paid');
+      }
     };
 
     const markUnpaid = async (id: number) => {
-      await billStore.markUnpaid(id);
+      try {
+        await billStore.markUnpaid(id);
+        toast.success('Bill marked as unpaid');
+      } catch (e: any) {
+        toast.error(e.response?.data?.error || 'Failed to update bill');
+      }
     };
 
     const handleSubmit = async () => {
-      if (editMode.value && form.id) {
-        await billStore.updateBill(form.id, form);
-      } else {
-        await billStore.createBill(form);
+      if (saving.value) return;
+
+      if (!form.name.trim() || !(form.amount > 0)) {
+        toast.error('Enter a bill name and an amount greater than 0');
+        return;
       }
-      closeModal();
+
+      saving.value = true;
+      try {
+        if (editMode.value && form.id) {
+          await billStore.updateBill(form.id, form);
+          toast.success('Bill updated');
+        } else {
+          await billStore.createBill(form);
+          toast.success('Bill created');
+        }
+        closeModal();
+      } catch (e: any) {
+        toast.error(e.response?.data?.error || 'Failed to save bill');
+      } finally {
+        saving.value = false;
+      }
     };
 
     const closeModal = () => {
@@ -284,6 +325,7 @@ export default defineComponent({
       accounts,
       showAddModal,
       editMode,
+      saving,
       form,
       formatCurrency,
       formatDate,

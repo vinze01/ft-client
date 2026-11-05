@@ -64,6 +64,23 @@
         </div>
       </div>
 
+      <div v-if="needs2FA">
+        <label class="label" for="login-totp">Authentication code</label>
+        <input
+          id="login-totp"
+          v-model="formState.totpCode"
+          type="text"
+          inputmode="numeric"
+          maxlength="6"
+          class="input"
+          placeholder="6-digit code"
+          autocomplete="one-time-code"
+        />
+        <p class="mt-1.5 text-[13px]" style="color: var(--text-secondary)">
+          Enter the code from your authenticator app.
+        </p>
+      </div>
+
       <button
         type="submit"
         :disabled="loading"
@@ -178,6 +195,7 @@
 
 <script lang="ts">
 import { defineComponent, reactive, ref } from "vue";
+import axios from "axios";
 import { toast } from "../components/Toast.vue";
 import { useAuthStore } from "../stores/authStore";
 import AuthLayout from "../components/AuthLayout.vue";
@@ -189,6 +207,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 interface FormState {
   username: string;
   password: string;
+  totpCode: string;
 }
 
 export default defineComponent({
@@ -206,19 +225,39 @@ export default defineComponent({
     const formState = reactive<FormState>({
       username: "",
       password: "",
+      totpCode: "",
     });
+
+    // Shown only after the API answers 401 { requires2FA: true } — users with
+    // 2FA enabled must be able to complete the challenge instead of being
+    // locked out of the UI.
+    const needs2FA = ref(false);
 
     const handleLogin = async () => {
       if (!formState.username || !formState.password) {
         toast.error("Please enter both username and password");
         return;
       }
+      if (needs2FA.value && !formState.totpCode.trim()) {
+        toast.error("Please enter your authentication code");
+        return;
+      }
 
       loading.value = true;
       try {
-        await authStore.login(formState.username, formState.password);
+        await authStore.login(
+          formState.username,
+          formState.password,
+          formState.totpCode.trim() || undefined,
+        );
         toast.success("Welcome back!");
       } catch (error: any) {
+        if (error.response?.data?.requires2FA) {
+          needs2FA.value = true;
+          formState.totpCode = "";
+          toast.warning("Enter the 6-digit code from your authenticator app");
+          return;
+        }
         toast.error(
           error.response?.data?.error || "Login failed. Please try again.",
         );
@@ -235,13 +274,13 @@ export default defineComponent({
 
       forgotLoading.value = true;
       try {
-        await fetch(`${API_URL}/forgot-password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: forgotEmail.value }),
+        // `fetch` resolves for 4xx/5xx too, so the old code reported success
+        // even when the reset mail was never sent.
+        await axios.post(`${API_URL}/forgot-password`, {
+          email: forgotEmail.value,
         });
         resetEmailSent.value = true;
-        toast.success("Reset link sent to your email");
+        toast.success("If that email is registered, a reset link is on its way");
       } catch (error: any) {
         toast.error(error.response?.data?.error || "Failed to send reset link");
       } finally {
@@ -253,6 +292,7 @@ export default defineComponent({
       formState,
       loading,
       showPassword,
+      needs2FA,
       showForgotPassword,
       forgotEmail,
       forgotLoading,

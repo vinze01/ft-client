@@ -13,7 +13,7 @@
     <!-- Filters -->
     <div class="card p-4 mb-6">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <select v-model="filters.type" @change="fetchIncomes" class="input">
+        <select v-model="filters.type" @change="onTypeChange" class="input">
           <option value="">All Types</option>
           <option value="monthly">Monthly</option>
           <option value="yearly">Yearly</option>
@@ -729,11 +729,9 @@ export default defineComponent({
 
         let filtered = response.data;
 
-        if (filters.type === "monthly" && filters.month) {
-          filtered = filtered.filter((i) => i.month === filters.month);
-        }
-
-        if (filters.type === "bi-monthly" && filters.month) {
+        // Month applies to monthly, bi-monthly AND "All Types" — previously a
+        // month picked under "All Types" was silently ignored.
+        if (filters.month) {
           filtered = filtered.filter((i) => i.month === filters.month);
         }
 
@@ -749,6 +747,14 @@ export default defineComponent({
       } finally {
         loading.value = false;
       }
+    };
+
+    // Switching type hides the month/period dropdowns but used to leave the
+    // stale values active on the next fetch.
+    const onTypeChange = () => {
+      filters.month = "";
+      filters.halfMonth = "";
+      fetchIncomes();
     };
 
     const fetchAccounts = async () => {
@@ -928,6 +934,7 @@ export default defineComponent({
       formatType,
       getPeriodLabel,
       fetchIncomes,
+      onTypeChange,
       showModal,
       editIncome,
       closeModal,

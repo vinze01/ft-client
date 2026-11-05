@@ -153,8 +153,10 @@
           </div>
 
           <div class="flex gap-3 pt-2">
-            <button type="button" @click="closeModal" class="btn btn-secondary flex-1">Cancel</button>
-            <button type="submit" class="btn btn-primary flex-1">{{ showContributeModal ? 'Add' : (editMode ? 'Update' : 'Create') }}</button>
+            <button type="button" @click="closeModal" class="btn btn-secondary flex-1" :disabled="saving">Cancel</button>
+            <button type="submit" class="btn btn-primary flex-1" :disabled="saving">
+              {{ saving ? 'Saving…' : (showContributeModal ? 'Add' : (editMode ? 'Update' : 'Create')) }}
+            </button>
           </div>
         </form>
         </div>
@@ -168,6 +170,7 @@ import { defineComponent, reactive, onMounted, ref } from 'vue';
 import { useGoalStore, type Goal } from '../stores/goalStore';
 import { useThemeStore } from '../stores/themeStore';
 import { toast } from '../components/Toast.vue';
+import { confirm } from '../components/ConfirmModal.vue';
 import PageHeader from '../components/PageHeader.vue';
 import EmptyState from '../components/EmptyState.vue';
 import { PlusIcon, TargetIcon } from '../components/icons';
@@ -189,6 +192,7 @@ export default defineComponent({
     const showAddModal = ref(false);
     const showContributeModal = ref(false);
     const editMode = ref(false);
+    const saving = ref(false);
 
     const form = reactive({
       id: null as number | null,
@@ -236,17 +240,36 @@ export default defineComponent({
     };
 
     const deleteGoal = async (id: number) => {
-      if (confirm('Delete this goal?')) {
-        try {
-          await goalStore.deleteGoal(id);
-          toast.success('Goal deleted');
-        } catch (e) {
-          toast.error('Failed to delete goal');
-        }
+      const ok = await confirm({
+        title: 'Delete Goal',
+        content: 'Are you sure you want to delete this goal?',
+        confirmText: 'Delete'
+      });
+      if (!ok) return;
+
+      try {
+        await goalStore.deleteGoal(id);
+        toast.success('Goal deleted');
+      } catch (e) {
+        toast.error('Failed to delete goal');
       }
     };
 
     const handleSubmit = async () => {
+      if (saving.value) return;
+
+      // Zero/empty targets made the API return 400 and left the modal open
+      // with no explanation.
+      if (!showContributeModal.value && (!form.name.trim() || !(form.targetAmount > 0))) {
+        toast.error('Enter a goal name and a target amount greater than 0');
+        return;
+      }
+      if (showContributeModal.value && !(form.currentAmount > 0)) {
+        toast.error('Enter a contribution amount greater than 0');
+        return;
+      }
+
+      saving.value = true;
       try {
         if (showContributeModal.value && form.id) {
           await goalStore.contribute(form.id, form.currentAmount);
@@ -261,6 +284,8 @@ export default defineComponent({
         closeModal();
       } catch (e: any) {
         toast.error(e.response?.data?.error || 'Failed to save goal');
+      } finally {
+        saving.value = false;
       }
     };
 
@@ -287,6 +312,7 @@ export default defineComponent({
       showAddModal,
       showContributeModal,
       editMode,
+      saving,
       form,
       themeStore,
       formatCurrency,

@@ -45,10 +45,11 @@ export const useAuthStore = defineStore("auth", {
         axios.defaults.headers.common["Authorization"] = `Bearer ${this.token}`;
       }
     },
-    async login(username: string, password: string): Promise<void> {
+    async login(username: string, password: string, totpCode?: string): Promise<void> {
       const response = await axios.post<AuthResponse>(`${API_URL}/login`, {
         username,
         password,
+        ...(totpCode ? { totpCode } : {}),
       });
       this.token = response.data.token;
       this.user = response.data.user;

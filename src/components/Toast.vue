@@ -4,6 +4,8 @@
       name="toast"
       tag="div"
       class="fixed top-4 right-4 z-[100] space-y-2"
+      aria-live="polite"
+      aria-atomic="false"
     >
       <div
         v-for="toast in toasts"
@@ -77,6 +79,7 @@
         <button
           @click="removeToast(toast.id)"
           class="ml-auto flex-shrink-0 opacity-60 hover:opacity-100"
+          aria-label="Dismiss notification"
         >
           <svg
             class="w-4 h-4"

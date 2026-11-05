@@ -126,8 +126,8 @@
           </div>
 
           <div class="flex gap-3 pt-2">
-            <button type="button" @click="closeModal" class="btn btn-secondary flex-1">Cancel</button>
-            <button type="submit" class="btn btn-primary flex-1">{{ editMode ? 'Update' : 'Create' }}</button>
+            <button type="button" @click="closeModal" class="btn btn-secondary flex-1" :disabled="saving">Cancel</button>
+            <button type="submit" class="btn btn-primary flex-1" :disabled="saving">{{ saving ? 'Saving…' : (editMode ? 'Update' : 'Create') }}</button>
           </div>
         </form>
         </div>
@@ -209,6 +209,7 @@ export default defineComponent({
   setup() {
     const tagStore = useTagStore();
     const showAddModal = ref(false);
+    const saving = ref(false);
     const showLinkModal = ref(false);
     const editMode = ref(false);
     const selectedTagId = ref<number | null>(null);
@@ -306,6 +307,8 @@ export default defineComponent({
     };
 
     const handleSubmit = async () => {
+      if (saving.value) return;
+      saving.value = true;
       try {
         if (editMode.value && form.id) {
           await tagStore.updateTag(form.id, { name: form.name, color: form.color });
@@ -317,6 +320,8 @@ export default defineComponent({
         closeModal();
       } catch (e: any) {
         toast.error(e.response?.data?.error || 'Failed to save tag');
+      } finally {
+        saving.value = false;
       }
     };
 
@@ -339,6 +344,7 @@ export default defineComponent({
     return {
       tagStore,
       showAddModal,
+      saving,
       showLinkModal,
       editMode,
       form,

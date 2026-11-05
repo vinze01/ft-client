@@ -193,7 +193,7 @@ export default defineComponent({
           axios.get(`${API_URL}/analytics/trends`, { params: { metric: 'expense', months: 12 } }),
           axios.get(`${API_URL}/analytics/burn-rate`),
           axios.get(`${API_URL}/analytics/net-worth`),
-          axios.get(`${API_URL}/analytics/savings-rate`)
+          axios.get(`${API_URL}/analytics/savings-rate`, { params: { months: 12 } })
         ]);
 
         expenseCategories.value = expCatRes.data.data || [];
@@ -202,8 +202,15 @@ export default defineComponent({
         trend.values = trendRes.data.data?.values || [];
         Object.assign(burnRate, burnRes.data.data || {});
         netWorth.value = worthRes.data.data?.[0]?.value || 0;
+        // The endpoint returns { data: [{ month, rate }], overallRate } — the
+        // "12 mo" card shows the overall rate, not the oldest single month.
         const rates = rateRes.data.data || [];
-        savingsRateYear.value = rates.length > 0 ? rates[0].rate || 0 : 0;
+        savingsRateYear.value =
+          typeof rateRes.data.overallRate === 'number'
+            ? rateRes.data.overallRate
+            : rates.length > 0
+              ? rates[0].rate || 0
+              : 0;
       } catch (e) {
         toast.error('Failed to load analytics');
       }

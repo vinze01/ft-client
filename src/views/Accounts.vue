@@ -71,7 +71,7 @@
       @action="showAddModal = true"
     />
 
-    <div v-if="showAddModal || showTransferModal" class="modal-overlay" @click.self="closeModals">
+    <div v-if="showAddModal || showEditModal || showTransferModal" class="modal-overlay" @click.self="closeModals">
       <div class="modal-content animate-scale-in" role="dialog" aria-modal="true">
         <div class="modal-header">
           <h3 class="section-title">
@@ -156,8 +156,10 @@
           </div>
 
           <div class="flex gap-3 pt-2">
-            <button type="button" @click="closeModals" class="btn btn-secondary flex-1">Cancel</button>
-            <button type="submit" class="btn btn-primary flex-1">{{ showTransferModal ? 'Transfer' : (showEditModal ? 'Update' : 'Create') }}</button>
+            <button type="button" @click="closeModals" class="btn btn-secondary flex-1" :disabled="saving">Cancel</button>
+            <button type="submit" class="btn btn-primary flex-1" :disabled="saving">
+              {{ saving ? 'Saving…' : (showTransferModal ? 'Transfer' : (showEditModal ? 'Update' : 'Create')) }}
+            </button>
           </div>
         </form>
         </div>
@@ -171,6 +173,7 @@ import { defineComponent, reactive, ref, onMounted } from 'vue';
 import { useAccountStore } from '../stores/accountStore';
 import { useThemeStore } from '../stores/themeStore';
 import { toast } from '../components/Toast.vue';
+import { confirm } from '../components/ConfirmModal.vue';
 import PageHeader from '../components/PageHeader.vue';
 import EmptyState from '../components/EmptyState.vue';
 import { PlusIcon, CreditCardIcon, TransferIcon } from '../components/icons';
@@ -200,6 +203,7 @@ export default defineComponent({
     const showAddModal = ref(false);
     const showEditModal = ref(false);
     const showTransferModal = ref(false);
+    const saving = ref(false);
 
     const formatCurrency = (amount: number) => {
       return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
@@ -217,12 +221,25 @@ export default defineComponent({
     };
 
     const deleteAccount = async (id: number) => {
-      if (confirm('Are you sure you want to delete this account?')) {
+      const ok = await confirm({
+        title: 'Delete Account',
+        content: 'Are you sure you want to delete this account?',
+        confirmText: 'Delete'
+      });
+      if (!ok) return;
+
+      try {
         await accountStore.deleteAccount(id);
+        await accountStore.fetchSummary();
+        toast.success('Account deleted');
+      } catch (e: any) {
+        toast.error(e.response?.data?.error || 'Failed to delete account');
       }
     };
 
     const handleSubmit = async () => {
+      if (saving.value) return;
+      saving.value = true;
       try {
         if (showEditModal.value && form.id) {
           await accountStore.updateAccount(form.id, {
@@ -253,9 +270,13 @@ export default defineComponent({
           });
           toast.success('Account created');
         }
+        // Balances/totals are server-derived, so always refresh the summary.
+        await accountStore.fetchSummary();
         closeModals();
       } catch (e: any) {
         toast.error(e.response?.data?.error || 'Failed to save account');
+      } finally {
+        saving.value = false;
       }
     };
 
@@ -289,6 +310,7 @@ export default defineComponent({
       showAddModal,
       showEditModal,
       showTransferModal,
+      saving,
       themeStore,
       formatCurrency,
       editAccount,

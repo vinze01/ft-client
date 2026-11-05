@@ -135,8 +135,8 @@
           </div>
 
           <div class="flex gap-3 pt-2">
-            <button type="button" @click="closeModal" class="btn btn-secondary flex-1">Cancel</button>
-            <button type="submit" class="btn btn-primary flex-1">{{ editMode ? 'Update' : 'Create' }}</button>
+            <button type="button" @click="closeModal" class="btn btn-secondary flex-1" :disabled="saving">Cancel</button>
+            <button type="submit" class="btn btn-primary flex-1" :disabled="saving">{{ saving ? 'Saving…' : (editMode ? 'Update' : 'Create') }}</button>
           </div>
         </form>
         </div>
@@ -212,6 +212,7 @@ export default defineComponent({
   setup() {
     const automationStore = useAutomationStore();
     const showAddModal = ref(false);
+    const saving = ref(false);
     const showTestModal = ref(false);
     const editMode = ref(false);
     const testingRuleId = ref<number | null>(null);
@@ -334,6 +335,8 @@ export default defineComponent({
         actionParams,
         isActive: form.isActive
       };
+      if (saving.value) return;
+      saving.value = true;
       try {
         if (editMode.value && form.id) {
           await automationStore.updateRule(form.id, payload);
@@ -345,6 +348,8 @@ export default defineComponent({
         closeModal();
       } catch (e: any) {
         toast.error(e.response?.data?.error || 'Failed to save rule');
+      } finally {
+        saving.value = false;
       }
     };
 
@@ -372,6 +377,7 @@ export default defineComponent({
     return {
       automationStore,
       showAddModal,
+      saving,
       showTestModal,
       editMode,
       form,

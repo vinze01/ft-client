@@ -110,7 +110,7 @@
                 {{ expense.createdAt ? formatDate(expense.createdAt) : "-" }}
               </td>
               <td class="text-ink-secondary">
-                {{ expense.updatedAt ? formatDate(expense.updatedAt) : "-" }}
+                {{ expense.updatedAt ? formatDateTime(expense.updatedAt) : "-" }}
               </td>
               <td>
                 <button
@@ -213,10 +213,12 @@
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Empty State -->
+    <!-- Mobile Empty State (must live outside the v-for, otherwise it repeats
+         per row and disappears when the list is empty) -->
+    <div v-if="expenses.length === 0" class="card md:hidden">
       <EmptyState
-        v-if="expenses.length === 0"
         :icon="WalletIcon"
         title="No expenses found"
         description="Start tracking your expenses by adding one."
@@ -532,8 +534,14 @@ export default defineComponent({
       });
     };
 
+    // Expenses store a DATEONLY value — rendering a time on it implied a
+    // midnight timestamp that was never recorded.
     const formatDate = (date: string): string => {
-      return dayjs(date).format("MMMM DD, YYYY hh:mm A");
+      return dayjs(date).format("MMMM DD, YYYY");
+    };
+
+    const formatDateTime = (value: string): string => {
+      return dayjs(value).format("MMMM DD, YYYY hh:mm A");
     };
 
     const getCategoryColor = (category: string): string => {
@@ -559,6 +567,7 @@ export default defineComponent({
         const params: Record<string, string> = {};
         if (filters.month) params.month = filters.month;
         if (filters.category) params.category = filters.category;
+        if (filters.search.trim()) params.search = filters.search.trim();
 
         const response = await axios.get<Expense[]>(`${API_URL}/expenses`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -682,6 +691,7 @@ export default defineComponent({
       categoryOptions,
       formatNumber,
       formatDate,
+      formatDateTime,
       getCategoryColor,
       fetchExpenses,
       debouncedSearch,

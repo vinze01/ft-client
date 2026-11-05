@@ -6,7 +6,15 @@
         class="modal-overlay"
         @click.self="handleCancel"
       >
-        <div class="modal-content !max-w-sm animate-scale-in" role="alertdialog" aria-modal="true">
+        <div
+          ref="dialogRef"
+          class="modal-content !max-w-sm animate-scale-in"
+          role="alertdialog"
+          aria-modal="true"
+          tabindex="-1"
+          @keydown.escape="handleCancel"
+          @keydown.enter.prevent="handleConfirm"
+        >
           <div class="p-6 text-center">
             <div
               class="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
@@ -91,7 +99,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from "vue";
+import { defineComponent, ref, computed, nextTick } from "vue";
 
 export default defineComponent({
   name: "ConfirmModal",
@@ -102,6 +110,7 @@ export default defineComponent({
     const type = ref<"danger" | "warning" | "info">("info");
     const confirmText = ref("Confirm");
     const cancelText = ref("Cancel");
+    const dialogRef = ref<HTMLElement | null>(null);
     let resolveRef: ((value: boolean) => void) | null = null;
 
     const iconColor = computed(() =>
@@ -137,6 +146,10 @@ export default defineComponent({
       cancelText.value = opts.cancelText || "Cancel";
       visible.value = true;
 
+      // Keyboard users could not dismiss the dialog: focus it so Escape and
+      // Enter reach the keydown handlers.
+      nextTick(() => dialogRef.value?.focus());
+
       return new Promise<boolean>((resolve) => {
         resolveRef = resolve;
       });
@@ -159,6 +172,7 @@ export default defineComponent({
       type,
       confirmText,
       cancelText,
+      dialogRef,
       iconStyle,
       confirmButtonStyle,
       show,

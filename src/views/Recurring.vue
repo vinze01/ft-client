@@ -136,8 +136,8 @@
             <label for="autoGenerate" class="text-sm text-ink-secondary">Auto-generate transactions</label>
           </div>
           <div class="flex gap-3 pt-2">
-            <button type="button" @click="showAddModal = false" class="btn btn-secondary flex-1">Cancel</button>
-            <button type="submit" class="btn btn-primary flex-1">Create</button>
+            <button type="button" @click="showAddModal = false" class="btn btn-secondary flex-1" :disabled="saving">Cancel</button>
+            <button type="submit" class="btn btn-primary flex-1" :disabled="saving">{{ saving ? 'Saving…' : 'Create' }}</button>
           </div>
         </form>
         </div>
@@ -150,6 +150,7 @@
 import { defineComponent, reactive, onMounted, ref } from 'vue';
 import axios from 'axios';
 import { useRecurringStore, type RecurringTransaction } from '../stores/recurringStore';
+import { toast } from '../components/Toast.vue';
 import PageHeader from '../components/PageHeader.vue';
 import EmptyState from '../components/EmptyState.vue';
 import { PlusIcon, RepeatIcon } from '../components/icons';
@@ -163,6 +164,7 @@ export default defineComponent({
   setup() {
     const recurringStore = useRecurringStore();
     const showAddModal = ref(false);
+    const saving = ref(false);
     const accounts = ref<{ id: number; name: string }[]>([]);
 
     const form = reactive({
@@ -200,20 +202,49 @@ export default defineComponent({
     };
 
     const executeNow = async (id: number) => {
-      await recurringStore.execute(id);
+      try {
+        await recurringStore.execute(id);
+        toast.success('Transaction created');
+      } catch (e: any) {
+        toast.error(e.response?.data?.error || 'Failed to execute recurring transaction');
+      }
     };
 
     const toggleActive = async (item: RecurringTransaction) => {
-      await recurringStore.updateRecurring(item.id, { isActive: !item.isActive });
+      try {
+        await recurringStore.updateRecurring(item.id, { isActive: !item.isActive });
+        toast.success(item.isActive ? 'Recurring transaction paused' : 'Recurring transaction resumed');
+      } catch (e: any) {
+        toast.error(e.response?.data?.error || 'Failed to update recurring transaction');
+      }
     };
 
     const handleSubmit = async () => {
-      await recurringStore.createRecurring({
-        ...form,
-        endDate: form.endDate || undefined,
-        executionDay: form.executionDay || undefined
-      });
-      showAddModal.value = false;
+      if (saving.value) return;
+
+      if (!form.description.trim() || !(form.amount > 0) || !form.startDate) {
+        toast.error('Enter a description, an amount greater than 0 and a start date');
+        return;
+      }
+
+      saving.value = true;
+      try {
+        await recurringStore.createRecurring({
+          ...form,
+          endDate: form.endDate || undefined,
+          executionDay: form.executionDay || undefined
+        });
+        toast.success('Recurring transaction created');
+        showAddModal.value = false;
+        form.description = '';
+        form.amount = 0;
+        form.endDate = '';
+        form.accountId = null;
+      } catch (e: any) {
+        toast.error(e.response?.data?.error || 'Failed to create recurring transaction');
+      } finally {
+        saving.value = false;
+      }
     };
 
     onMounted(async () => {
@@ -225,6 +256,7 @@ export default defineComponent({
       recurring: recurringStore.recurring,
       accounts,
       showAddModal,
+      saving,
       form,
       formatCurrency,
       formatDate,

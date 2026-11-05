@@ -256,6 +256,7 @@ import {
 import { useAuthStore } from "../stores/authStore";
 import { useThemeStore } from "../stores/themeStore";
 import axios from "axios";
+import { toast } from "../components/Toast.vue";
 import type { DashboardSummary, BudgetView } from "../types";
 import PageHeader from "../components/PageHeader.vue";
 import StatCard from "../components/StatCard.vue";
@@ -478,6 +479,7 @@ export default defineComponent({
         summary.value = response.data;
       } catch (error) {
         console.error("Failed to fetch dashboard:", error);
+        toast.error("Failed to load dashboard data");
       } finally {
         loading.value = false;
       }
